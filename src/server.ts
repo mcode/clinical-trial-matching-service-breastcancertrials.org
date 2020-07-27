@@ -44,6 +44,8 @@ app.post('/getClinicalTrial', function (req, res) {
     const patientBundle = (typeof postBody.patientData === 'string' ? JSON.parse(postBody.patientData) : postBody.patientData) as Record<string, unknown>;
     if (isBundle(patientBundle)) {
       getResponse(patientBundle).then(result => {
+        console.log(result); // printing result from breastcancertrials.org for development
+        console.log("END OF RESULTS");
         const fhirResult = new SearchSet(result);
         // For debugging: dump the result out
         // console.log(JSON.stringify(fhirResult, null, 2));
@@ -55,7 +57,7 @@ app.post('/getClinicalTrial', function (req, res) {
     } else {
       res.status(400).send({ error: 'Invalid patientBundle' });
     }
-  } 
+  }
   else {
     // request missing json fields
     res.status(400).send({ error: 'Request missing required fields' });
