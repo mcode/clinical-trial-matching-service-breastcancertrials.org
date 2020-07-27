@@ -370,9 +370,9 @@ export class APIError extends Error {
 //set environment variables
 const environment = new Configuration().defaultEnvObject();
 // currently the breastcancertrials.org sandbox doesn't need a token, so this may be removed
-if (typeof environment.AUTH_TOKEN !== 'string' || environment.AUTH_TOKEN === '') {
-    throw new Error('Authorization token is not set in environment. Please set AUTH_TOKEN to valid API token.');
-}
+//if (typeof environment.AUTH_TOKEN !== 'string' || environment.AUTH_TOKEN === '') {
+//    throw new Error('Authorization token is not set in environment. Please set AUTH_TOKEN to valid API token.');
+//}
 
 
 /** TO-DO
@@ -380,7 +380,8 @@ if (typeof environment.AUTH_TOKEN !== 'string' || environment.AUTH_TOKEN === '')
  * based on a patient bundle.
  * Reference https://github.com/mcode/clinical-trial-matching-engine/wiki to see patientBundle Structures
  -> possibly not needed for breastcancertrials.org - for now it seems the patientBundle itself can serve as the query
- */
+    commenting out the whole class for now
+
 export class APIQuery {
     conditions = new Set<string>();
     zipCode?: string = null;
@@ -437,7 +438,7 @@ export class APIQuery {
      * Create an api request string
      * @return {string} the api query
      -> possibly not needed for breastcancertrials.org - for now it seems the patientBundle itself can serve as the query
-     */
+
     toQuery(): string {
       const query = ` {}`;
       return query;
@@ -447,7 +448,7 @@ export class APIQuery {
       return this.toQuery();
     }
   }
-
+*/
 
 /** Converts patient Bundle (stored within request to server) --> Promise < JSON>
  * @param reqBody The body of the request containing patient bundle data
