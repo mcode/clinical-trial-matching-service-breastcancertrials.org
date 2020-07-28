@@ -1,14 +1,14 @@
 /**
- * This file will establish the presets for the server such as its port, matching service endpoint, and authorization 
+ * This file will establish the presets for the server such as its port, matching service endpoint, and authorization
  */
 
 import fs from 'fs';
 import path from 'path';
 
 const defaults: {[key: string]: string | null} = {
-  API_ENDPOINT: '', //TO-DO enter the endpoint for your api 
+  API_ENDPOINT: 'http://www.ctmatchsandbox.org/ctmatch-service-v3/services/bctmatch/bundle/trials', // endpoint for your api
   PORT: '3000',
-  AUTH_TOKEN: null //TO-DO create a .env.local file to store authorization token for your API
+  AUTH_TOKEN: null //TO-DO create a .env.local file to store authorization token for your API // no token?
 };
 
 
