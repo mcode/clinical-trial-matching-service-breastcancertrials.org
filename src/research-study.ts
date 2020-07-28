@@ -128,6 +128,7 @@ export class ResearchStudy {
     */
 
     this.id = String(id);
+    this.title = trial.trialTitle;
   }
 }
 
