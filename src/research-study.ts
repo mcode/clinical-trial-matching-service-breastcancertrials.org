@@ -122,8 +122,6 @@ export class ResearchStudy {
     const backupCriteria = trialbackup.getBackupCriteria(backupInfo);
     const backupSites = trialbackup.getBackupSite(backupInfo);
 
-    console.log(backupSites);
-
     if (backupStatus) {
       this.status = backupStatus;
     }

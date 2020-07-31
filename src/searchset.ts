@@ -23,13 +23,13 @@ export class SearchSet {
   total: number;
   entry: SearchBundleEntry[] = [];
 
-  constructor(response: any) {
+  constructor(response: TrialResponse[]) {
     const trials = response; // iterable version of the trials returned from match service
     this.total = response.length; // total number of trials returned by the match service
     let index = 0;
 
     for (const trial of trials) {
-      const study = new ResearchStudy(trial as TrialResponse, index); // TO DO: Implement the ResearchStudy constructor in research-study.ts
+      const study = new ResearchStudy(trial, index); // TO DO: Implement the ResearchStudy constructor in research-study.ts as TrialResponse
       //const searchResult: SearchResult = {mode: "match", score: 1}; // no match likelihood score
       this.entry.push({resource: study});
       index++;

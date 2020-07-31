@@ -1,4 +1,5 @@
 import { ResearchStudy } from '../src/research-study';
+import { TrialResponse } from "../src/breastcancertrials";
 
 /*
  * Use the FHIR validator jar to check the ResearchStudy bundle being sent to
@@ -45,7 +46,7 @@ describe('FHIR Validator jar', () => {
 
   it('validates matching service results -> research study object', function (done) {
     const data = fs.readFileSync('./spec/data/trial_object.json', { encoding: 'utf8' });
-    const json = JSON.parse(data);
+    const json = JSON.parse(data) as TrialResponse[];
     const study = new ResearchStudy(json, 1);
     fs.writeFileSync('./spec/data/converted.json', JSON.stringify(study));
     const child = exec(
