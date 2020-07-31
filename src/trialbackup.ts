@@ -55,7 +55,7 @@ export interface TrialBackup
       maximum_age: string,
       healthy_volunteers: string
     },
-    location: { facility: [Record<string, unknown>] },
+    location: Site[],
     location_countries: { country: string },
     verification_date: string,
     study_first_submitted: string,
@@ -69,6 +69,21 @@ export interface TrialBackup
     patient_data: { sharing_ipd: string }
   }
 }
+
+export interface Site {
+  facility: {name: string},
+  contact?: {phone?: string, email?: string}
+}
+
+// for statuses coming back from trialbackup to FHIR codes
+const statusMap = new Map<string, string>([
+  ['Active, not recruiting', 'closed-to-accrual'],
+  ['Approved for marketing', 'approved'],
+  ['Available', 'active'],
+  ['Enrolling by invitation', 'active'],
+  ['Not yet recruiting', 'approved'],
+  ['Recruiting', 'active']
+]);
 
 export function getBackupTrial(nctId: string) : TrialBackup {
   const filePath = `./AllPublicXML/${nctId.substr(0, 7)}xxxx/${nctId}.xml`;
@@ -88,11 +103,27 @@ export function getBackupSummary(trial: TrialBackup) {
 }
 
 export function getBackupPhase(trial: TrialBackup) {
-  const phase:string  = trial.clinical_study.phase;
+  const phase:string = trial.clinical_study.phase;
   return phase;
 }
 
 export function getBackupStudyType(trial: TrialBackup) {
-  const studytype:string  = trial.clinical_study.study_type;
+  const studytype:string = trial.clinical_study.study_type;
   return studytype;
  }
+
+// additional getters for breastcancertrials.org
+export function getBackupStatus(trial: TrialBackup) {
+ const status:string = statusMap.get(trial.clinical_study.overall_status);
+ return status;
+}
+
+export function getBackupCondition(trial: TrialBackup) {
+ const condition:string = trial.clinical_study.condition;
+ return typeof condition == 'string' ? [ condition ] : condition;
+}
+
+export function getBackupSite(trial: TrialBackup) {
+ const sites: Site[] = trial.clinical_study.location;
+ return Array.isArray(sites) ? sites : [sites];
+}
