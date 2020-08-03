@@ -47,7 +47,7 @@ app.post('/getClinicalTrial', function (req, res) {
       getResponse(patientBundle).then(result => {
         //console.log(result); // printing result from breastcancertrials.org for development
         console.log("END OF RESULTS");
-        const fhirResult = new SearchSet(JSON.parse(JSON.stringify(result)) as TrialResponse[]);
+        const fhirResult = new SearchSet(result as TrialResponse[]);
         // For debugging: dump the result out
         // console.log(JSON.stringify(fhirResult, null, 2));
         res.status(200).send(JSON.stringify(fhirResult));
