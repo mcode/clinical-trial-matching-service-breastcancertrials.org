@@ -2,11 +2,17 @@
 
 # Ignore built files
 /dist
+/dist-spec
 
 # Ignore installed modules
 /node_modules
 spec/data/org.hl7.fhir.validator.jar
-/src/AllPublicXML
+/AllPublicXML
+
+# Ignore Instanbul coverage files
+/.nyc_output
+/coverage
+
 # System Files
 .DS_Store
 Thumbs.db

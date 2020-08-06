@@ -1,15 +1,19 @@
 {
-  "name": "clinicaltrialconnectapi",
+  "name": "clinical-trial-matching-service-breastcancertrials.org",
   "version": "1.0.0",
-  "description": "",
+  "description": "Matching service wrapper that works with breastcancertrials.org",
   "main": "server.js",
   "scripts": {
     "build": "npm run build-ts",
     "build-ts": "tsc",
+    "build:tests": "tsc --build tsconfig.test.json",
+    "coverage": "npm run-script build:tests && nyc --require ts-node/register --reporter=lcovonly jasmine",
+    "coverage:html": "npm run-script build:tests && nyc --require ts-node/register --reporter=html jasmine",
     "lint": "eslint . --ext .js,.ts",
     "serve": "node dist/server.js",
     "start": "npm run serve",
-    "test": "ts-node node_modules/jasmine/bin/jasmine"
+    "test": "npm run-script build:tests && npm run-script test:run",
+    "test:run": "jasmine"
   },
   "author": "",
   "license": "Apache-2.0",
@@ -19,6 +23,7 @@
     "express": "^4.17.1",
     "jasmine": "^3.5.0",
     "node-fetch": "^2.6.0",
+    "nyc": "^15.1.0",
     "tsc": "^1.20150623.0",
     "xml2json": "^0.12.0"
   },
