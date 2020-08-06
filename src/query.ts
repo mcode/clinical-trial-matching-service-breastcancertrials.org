@@ -9,6 +9,8 @@ import http from 'http'; // changed from https
 import { IncomingMessage } from 'http';
 import Configuration from "./env";
 
+type JsonObject = Record<string, unknown> | Array<unknown>;
+
 // sample for development
 const samplePatient = `{
                         "resourceType": "Bundle",
@@ -454,12 +456,12 @@ export class APIQuery {
  * @param reqBody The body of the request containing patient bundle data
  */
 
-export function getResponse(patientBundle: Bundle) : Promise<JSON> {
+export function getResponse(patientBundle: Bundle) : Promise<JsonObject> {
     //const query = (new APIQuery(patientBundle)).toQuery();
     return sendQuery(JSON.stringify(patientBundle)); // For now, the full patient bundle is the query
 }
 
-function sendQuery(query: string): Promise<JSON> {
+function sendQuery(query: string): Promise<JsonObject> {
     return new Promise((resolve, reject) => {
       const body = Buffer.from(query, 'utf8'); // or use samplePatient
       console.log('Running raw query');

@@ -1,4 +1,5 @@
 import { ResearchStudy } from './research-study';
+import { TrialResponse } from "./breastcancertrials";
 
 /* Handles conversion of API results to a standardized FHIR object
 This file contains a basic implementation of a FHIR Bundle (of type searchset)
@@ -22,16 +23,15 @@ export class SearchSet {
   total: number;
   entry: SearchBundleEntry[] = [];
 
-  constructor(response: any) {
-    this.total = 0; // TO-DO: Set the total number of trials returned by the match service
-    const trials = []; // TO-DO: Create an iterable version of the trials returned from the raw JSON of the match service (if necessary)
+  constructor(response: TrialResponse[]) {
+    const trials = response; // iterable version of the trials returned from match service
+    this.total = response.length; // total number of trials returned by the match service
     let index = 0;
 
     for (const trial of trials) {
-      const study = new ResearchStudy(trial, index); // TO DO: Implement the ResearchStudy constructor in research-study.ts
-      const searchResult: SearchResult = {mode: "match", score: 1}; // TO-DO: Set the score (0-1) for each trial (< 0.33 for "No Match", else < 0.67 for "Possible Match", else "Likely Match")
-      // If the trial does not have a match score, do not include the "search" parameter in the following line
-      this.entry.push({resource: study, search: searchResult});
+      const study = new ResearchStudy(trial, index); // TO DO: Implement the ResearchStudy constructor in research-study.ts as TrialResponse
+      //const searchResult: SearchResult = {mode: "match", score: 1}; // no match likelihood score
+      this.entry.push({resource: study});
       index++;
     }
 

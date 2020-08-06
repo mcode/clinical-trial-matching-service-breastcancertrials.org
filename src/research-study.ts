@@ -1,4 +1,5 @@
 import * as trialbackup from './trialbackup';
+import * as breastcancertrials from "./breastcancertrials";
 
 /*
 This file contains a basic implementation of a FHIR ResearchStudy resource and supporting interfaces
@@ -83,52 +84,164 @@ export interface HumanName {
 
 // ResearchStudy implementation
 export class ResearchStudy {
-  resourceType = 'ResearchStudy';
-  id?: string;
-  identifier?: Identifier[];
-  title?: string;
-  status?: string; // Use values from this coding system: http://hl7.org/fhir/research-study-status
-  phase?: CodeableConcept; // Use values from this coding system: http://terminology.hl7.org/CodeSystem/research-study-phase
-  category?: CodeableConcept[];
-  condition?: CodeableConcept[];
-  contact?: ContactDetail[];
-  keyword?: CodeableConcept[];
-  location?: CodeableConcept[];
-  description?: string; // Should actually be markdown
-  arm?: Arm[];
-  objective?: Objective[];
-  enrollment?: Reference[]; // reference to a list of Group resource(s) (trial inclusion/exclusion criteria)
-  sponsor?: Reference; // reference to an Organization resource
-  principalInvestigator?: Reference; // reference to a Practitioner resource
-  site?: Reference[]; // reference to a Location Resource
-  contained?: (Group | Location | Organization | Practitioner)[]; // List of referenced resources
-  // Details on Contained: https://www.hl7.org/fhir/domainresource-definitions.html#DomainResource.contained
-  // Details on Reference: https://www.hl7.org/fhir/references.html#Reference
-  // Note: If the trial criteria is a text blob that cannot be mapped to characteristics in a Group resource,
-  // it can be stored in the display attribute of the Reference instead
+  resourceType = 'ResearchStudy'; // done
+  id?: string; // done
+  identifier?: Identifier[]; // done
+  title?: string; // done
+  status?: string; // Use values from this coding system: http://hl7.org/fhir/research-study-status // done
+  phase?: CodeableConcept; // Use values from this coding system: http://terminology.hl7.org/CodeSystem/research-study-phase // done
+  category?: CodeableConcept[]; // done
+  condition?: CodeableConcept[]; // done
+  contact?: ContactDetail[]; // done
+  keyword?: CodeableConcept[]; // done
+  location?: CodeableConcept[]; // done
+  description?: string; // Should actually be markdown // done
+  arm?: Arm[]; // skipped
+  objective?: Objective[]; // done
+  enrollment?: Reference[]; // reference to a list of Group resource(s) (trial inclusion/exclusion criteria) // done
+  sponsor?: Reference; // reference to an Organization resource // done
+  principalInvestigator?: Reference; // reference to a Practitioner resource // skipped
+  site?: Reference[]; // reference to a Location Resource // done
+  contained?: (Group | Location | Organization | Practitioner)[]; // List of referenced resources // done
 
-  constructor(trial, id: number) {
-
-    /*
-    Set as many of the above parameters as possible
-    The following parameters are required for the UI:
-    - Title
-    - Summary
-    - Site location
-    - Phase
-    - Contact Information i.e. sponsor email, phone number
-    - Study Type
-    - Inclusion/ Exclusion criteria
-    If your service does not return a necessary attribute, leverage the code in trialbackup.ts with the trial's nctId
-    to find the required information.
-    Write your constructor such that if the information cannot be found the response from your match service or in the
-    trialbackup system, the parameter is left out of the ResearchStudy object entirely
-    A sample filled out ResearchStudy constructor (build for TrialScope) can be found here:
-    https://github.com/mcode/clinical-trial-matching-service/blob/master/src/research-study.ts
-    */
+  constructor(trial: breastcancertrials.TrialResponse, id: number) {
 
     this.id = String(id);
+    if (trial.trialTitle) {
+      this.title = trial.trialTitle;
+    }
+    if (trial.trialId) {
+      this.identifier = [{ use: 'official', system: 'http://clinicaltrials.gov', value: trial.trialId }];
+    }
+    // Attributes we have to get from the backup service
+    const backupInfo = trialbackup.getBackupTrial(trial.trialId);
+    const backupStatus = trialbackup.getBackupStatus(backupInfo);
+    const backupCategory = trialbackup.getBackupStudyType(backupInfo);
+    const backupCondition = trialbackup.getBackupCondition(backupInfo);
+    const backupDescription = trialbackup.getBackupSummary(backupInfo);
+    const backupCriteria = trialbackup.getBackupCriteria(backupInfo);
+    const backupSites = trialbackup.getBackupSite(backupInfo);
+
+    if (backupStatus) {
+      this.status = backupStatus;
+    }
+    if (trial.phaseNumber) {
+     this.phase = {
+                    coding: [
+                      {
+                        system: 'http://terminology.hl7.org/CodeSystem/research-study-phase',
+                        code: breastcancertrials.phaseCodeMap.get(trial.phaseNumber),
+                        display: breastcancertrials.phaseDisplayMap.get(trial.phaseNumber)
+                      }
+                    ],
+                    text: breastcancertrials.phaseDisplayMap.get(trial.phaseNumber)
+                  };
+    }
+    if (trial.trialCategories != []) {
+      this.keyword = this.convertArrayToCodeableConcept(trial.trialCategories);
+    }
+    if (backupCategory) {
+      this.category = [{ text: backupCategory }];
+    }
+    if (backupCondition) {
+      this.condition = this.convertArrayToCodeableConcept(backupCondition);
+    }
+    if (trial.contactName || trial.contactPhone || trial.contactEmail) {
+      this.contact = this.setContact(trial.contactName, trial.contactPhone, trial.contactEmail);
+    }
+    this.location = [{ text: "United States" }]; // default location country is USA
+    if (trial.purpose && trial.whoIsThisFor) {
+      this.description = "Purpose: " + trial.purpose + "\n\n Targets: " + trial.whoIsThisFor + "\n\n Description: " + backupDescription;
+    } else {
+      this.description = backupDescription;
+    }
+    if (trial.purpose) {
+      this.objective = [{ name: trial.purpose }];
+    }
+    if (backupCriteria) {
+      this.enrollment = [{ reference: '#group' + this.id, type: 'Group', display: backupCriteria}];
+    }
+    if (trial.siteName) {
+      this.sponsor = { reference: '#org' + this.id, type: 'Organization' };
+    }
+    if (backupSites) {
+      this.site = this.setSiteReferences(backupSites);
+    }
+    if (this.enrollment || this.site || this.sponsor || this.principalInvestigator) {
+      this.contained = [];
+    }
+    if (this.enrollment) {
+      this.contained.push({ resourceType: 'Group', id: 'group' + this.id, type: 'person', actual: false });
+    }
+    if (this.sponsor) {
+      this.contained.push({ resourceType: 'Organization', id: 'org' + this.id, name: trial.siteName });
+    }
+    if (this.site) {
+      this.addSitesToContained(backupSites);
+    }
+
   }
+
+  convertArrayToCodeableConcept(trialConditions: string[]): CodeableConcept[] {
+    const fhirConditions: CodeableConcept[] = [];
+    for (const condition of trialConditions) {
+      fhirConditions.push({ text: condition });
+    }
+    return fhirConditions;
+  }
+
+  setContact(name: string, phone: string, email: string): ContactDetail[] {
+      const contact: ContactDetail = {};
+      if (name) {
+        contact.name = name;
+      }
+      if (phone || email) {
+        const telecoms: Telecom[] = [];
+        if (phone) {
+          telecoms.push({ system: 'phone', value: phone, use: 'work' });
+        }
+        if (email) {
+          telecoms.push({ system: 'email', value: email, use: 'work' });
+        }
+        contact.telecom = telecoms;
+      }
+      return [contact];
+    }
+
+  setSiteReferences(sites: trialbackup.Site[]): Reference[] {
+    const siteReferences: Reference[] = [];
+    let siteIndex = 0;
+    for (const site of sites) {
+      siteReferences.push({ reference: '#location' + this.id + '-' + String(siteIndex), type: 'Location' });
+      siteIndex++;
+    }
+    return siteReferences;
+  }
+
+  addSitesToContained(sites: trialbackup.Site[]): void {
+    let locationIndex = 0;
+    for (const location of sites) {
+      const local: Location = {};
+      local.resourceType = 'Location';
+      local.id = 'location' + this.id + '-' + String(locationIndex);
+      if (location.facility) {
+        local.name = location.facility.name;
+      }
+      if (location.contact) {
+        const localTelecom: Telecom[] = [];
+        if (location.contact.email) {
+          localTelecom.push({ system: 'email', value: location.contact.email, use: 'work' });
+        }
+        if (location.contact.phone) {
+          localTelecom.push({ system: 'phone', value: location.contact.phone, use: 'work' });
+        }
+        local.telecom = localTelecom;
+      }
+      this.contained.push(local);
+      locationIndex++;
+    }
+  }
+
 }
 
 

@@ -5,6 +5,7 @@ import Configuration from './env';
 import { isBundle } from './bundle';
 import { SearchSet } from './searchset';
 import { getResponse } from './query';
+import { TrialResponse } from "./breastcancertrials";
 
 const app = express();
 
@@ -44,9 +45,9 @@ app.post('/getClinicalTrial', function (req, res) {
     const patientBundle = (typeof postBody.patientData === 'string' ? JSON.parse(postBody.patientData) : postBody.patientData) as Record<string, unknown>;
     if (isBundle(patientBundle)) {
       getResponse(patientBundle).then(result => {
-        console.log(result); // printing result from breastcancertrials.org for development
+        //console.log(result); // printing result from breastcancertrials.org for development
         console.log("END OF RESULTS");
-        const fhirResult = new SearchSet(result);
+        const fhirResult = new SearchSet(result as TrialResponse[]);
         // For debugging: dump the result out
         // console.log(JSON.stringify(fhirResult, null, 2));
         res.status(200).send(JSON.stringify(fhirResult));
