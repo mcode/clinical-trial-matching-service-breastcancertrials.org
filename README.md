@@ -9,7 +9,7 @@ These steps give an overview of steps you need to take to get the template into 
 
 1. Navigate to **env.ts**. 
     - Fill in the defaults environment variables corresponding to your api service
-    - Create a file in the project directory named **.env.local** and enter the following: AUTH_TOKEN = **_insert authorization token_** 
+    - Create a file in the project directory named **.env.local** and enter the following: API_ENDPOINT = **_insert API endpoint_** 
 2. Open up **searchset.ts**. This is one of two files that turns the response from the match API into a FHIR Bundle.
     - Fill in the TO-DOs in the _SearchSet_ constructor
 3. Open up **research-study.ts**. This is the other file that turns the response from the match API into a FHIR Bundle. This file maps a trial from the match API to a FHIR ResearchStudy.
