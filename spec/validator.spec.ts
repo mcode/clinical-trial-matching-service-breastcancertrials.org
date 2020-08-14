@@ -1,66 +1,51 @@
 import { ResearchStudy } from '../src/research-study';
 import { TrialResponse } from "../src/breastcancertrials";
 
-/*
- * Use the FHIR validator jar to check the ResearchStudy bundle being sent to
- * the UI is formatted properly and satisfy FHIR standards.
- *
- * Download the fhir validator here:
- * https://storage.googleapis.com/ig-build/org.hl7.fhir.validator.jar
- * and place in this directory.
- *
- * Paste an example research study in the resource.json file before running the
- * test.
- *
- * Paste a trial object returned from the matching service API into
- * `trial_object.json`. This will check if the conversion to a ResearchStudy is
- * being made properly.
- */
-import { exec } from 'child_process';
 import * as fs from 'fs';
+import * as path from 'path';
 
-// NOTE: The jar file must be named org.hl7.fhir.validator.jar
+import { Fhir } from 'fhir/fhir';
+import { ValidatorMessage } from 'fhir/validator';
 
-describe('FHIR Validator jar', () => {
-  beforeEach(function() {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 50000;
-  });
-  afterEach(function() {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;
-  });
+describe('FHIR Validation', () => {
+  const fhir = new Fhir();
 
-  it('validates the sample FHIR object', function (done) {
-    const child = exec(
-      'java -jar ./spec/data/org.hl7.fhir.validator.jar ./spec/data/resource.json',
-      function (error, stdout, stderr) {
-        // standard output of jar file is through stdout
-        console.log(`Output -> ${stdout}`);
-        if (error !== null) {
-          console.log(`Error ->  ${stderr}`);
+  it('converting result to ResearchStudy produces a valid FHIR object', function () {
+    return new Promise((resolve, reject) => {
+      fs.readFile(path.join(__dirname, '../../spec/data/trial_object.json'), { encoding: 'utf8' }, (error, data) => {
+        if (error) {
+          reject(error);
+          return;
         }
-        expect(error).toBeNull();
-        done();
-      }
-    );
-  });
-
-  it('validates matching service results -> research study object', function (done) {
-    const data = fs.readFileSync('./spec/data/trial_object.json', { encoding: 'utf8' });
-    const json = JSON.parse(data) as TrialResponse;
-    const study = new ResearchStudy(json, 1);
-    fs.writeFileSync('./spec/data/converted.json', JSON.stringify(study));
-    const child = exec(
-      'java -jar ./spec/data/org.hl7.fhir.validator.jar ./spec/data/converted.json',
-      function (error, stdout, stderr) {
-        // standard output of jar file is through stdout
-        console.log(`Output -> ${stdout}`);
-        if (error !== null) {
-          console.log(`Error ->  ${stderr}`);
+        const json: TrialResponse = JSON.parse(data) as TrialResponse;
+        const study = new ResearchStudy(json, 1);
+        const result = fhir.validate(study);
+        if (result.messages && result.messages.length > 0) {
+          console.error('Validation has messages:');
+          for (const message of result.messages) {
+            formatValidationMessage(message);
+          }
         }
-        expect(error).toBeNull();
-        done();
-        fs.unlinkSync('./spec/data/converted.json');
-      }
-    );
+        expect(result.valid).toBeTrue();
+        resolve();
+      });
+    });
   });
 });
+
+/**
+ * Helper function to format a validation message from fhir.validate
+ */
+function formatValidationMessage(message: ValidatorMessage, output: (str: string) => void = console.error): void {
+  let m = message.message ? message.message : '(no message from validator)';
+  if (message.severity) {
+    m = '[' + message.severity.toUpperCase() + '] ' + m;
+  }
+  if (message.location) {
+    m += ' ' + message.location;
+  }
+  if (message.resourceId) {
+    m += ' in ' + message.resourceId;
+  }
+  output(m);
+}
