@@ -1,35 +1,36 @@
-import { ResearchStudy } from '../src/research-study';
+import { convertToResearchStudy } from '../src/research-study';
 import { TrialResponse } from "../src/breastcancertrials";
 
 import * as fs from 'fs';
 import * as path from 'path';
+import * as util from 'util';
 
 import { Fhir } from 'fhir/fhir';
 import { ValidatorMessage } from 'fhir/validator';
+import { parseClinicalTrialXML } from 'clinical-trial-matching-service';
+
+function specPath(filePath: string): string {
+  return path.join(__dirname, '../../spec', filePath);
+}
 
 describe('FHIR Validation', () => {
   const fhir = new Fhir();
 
-  it('converting result to ResearchStudy produces a valid FHIR object', function () {
-    return new Promise((resolve, reject) => {
-      fs.readFile(path.join(__dirname, '../../spec/data/trial_object.json'), { encoding: 'utf8' }, (error, data) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        const json: TrialResponse = JSON.parse(data) as TrialResponse;
-        const study = new ResearchStudy(json, 1);
-        const result = fhir.validate(study);
-        if (result.messages && result.messages.length > 0) {
-          console.error('Validation has messages:');
-          for (const message of result.messages) {
-            formatValidationMessage(message);
-          }
-        }
-        expect(result.valid).toBeTrue();
-        resolve();
-      });
-    });
+  it('converting result to ResearchStudy produces a valid FHIR object', async function () {
+    const readFile = util.promisify(fs.readFile);
+    const data = await readFile(specPath('data/trial_object.json'), { encoding: 'utf8' });
+    const json: TrialResponse = JSON.parse(data) as TrialResponse;
+    const clinicalStudyXML = await readFile(specPath('data/NCT03377387.xml'), { encoding: 'utf8' });
+    const clinicalStudy = await parseClinicalTrialXML(clinicalStudyXML);
+    const study = convertToResearchStudy(json, clinicalStudy);
+    const result = fhir.validate(study);
+    if (result.messages && result.messages.length > 0) {
+      console.error('Validation has messages:');
+      for (const message of result.messages) {
+        formatValidationMessage(message);
+      }
+    }
+    expect(result.valid).toBeTrue();
   });
 });
 

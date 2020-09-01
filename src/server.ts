@@ -1,71 +1,51 @@
-import express from 'express';
+// This stub handles starting the server.
 
-import bodyParser from 'body-parser';
-import Configuration from './env';
-import { isBundle } from './bundle';
-import { SearchSet } from './searchset';
-import { getResponse } from './query';
-import { TrialResponse } from "./breastcancertrials";
+import { createClinicalTrialLookup } from './query';
+import ClinicalTrialMatchingService, { configFromEnv, ClinicalTrialGovService } from 'clinical-trial-matching-service';
+import * as dotenv from 'dotenv-flow';
 
-const app = express();
+export class BreastCancerTrialsService extends ClinicalTrialMatchingService {
+  backupService: ClinicalTrialGovService;
 
-const environment = new Configuration().defaultEnvObject();
-
-app.use(bodyParser.json({
-  // Need to increase the payload limit to receive patient bundles
-  limit: "10MB"
-}));
-
-app.use(function (_req, res, next) {
-  // Website you wish to allow to connect
-  res.setHeader('Access-Control-Allow-Origin', '*');
-
-  // Request methods you wish to allow
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-
-  // Request headers you wish to allow
-  res.setHeader('Access-Control-Allow-Headers', 'Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With, WU-Api-Key, WU-Api-Secret');
-
-  next();
-});
-
-/* Default call*/
-app.get('/', function (_req, res) {
-  res.status(200).send('Hello from Clinical Trial');
-});
-
-
-
-/**
- * Get clinical trial results (the "main" API).
- */
-app.post('/getClinicalTrial', function (req, res) {
-  const postBody = req.body as Record<string, unknown>;
-  if ('patientData' in postBody) {
-    const patientBundle = (typeof postBody.patientData === 'string' ? JSON.parse(postBody.patientData) : postBody.patientData) as Record<string, unknown>;
-    if (isBundle(patientBundle)) {
-      getResponse(patientBundle).then(result => {
-        //console.log(result); // printing result from breastcancertrials.org for development
-        console.log("END OF RESULTS");
-        const fhirResult = new SearchSet(result as TrialResponse[]);
-        // For debugging: dump the result out
-        // console.log(JSON.stringify(fhirResult, null, 2));
-        res.status(200).send(JSON.stringify(fhirResult));
-      }).catch(error => {
-        console.error(error);
-        res.status(500).send({ error: 'Error from server', exception: Object.prototype.toString.call(error) as string });
-      });
-    } else {
-      res.status(400).send({ error: 'Invalid patientBundle' });
-    }
+  constructor(config: Record<string, string | number>) {
+    // Need to instantiate the backup service first - note that it is NOT
+    // initialized here
+    // TODO: Make this configurable
+    const backupService = new ClinicalTrialGovService('clinicaltrial-backup-cache');
+    super(createClinicalTrialLookup(config, backupService), config);
+    this.backupService = backupService;
   }
-  else {
-    // request missing json fields
-    res.status(400).send({ error: 'Request missing required fields' });
-  }
-});
 
-app.use(express.static('public'));
-console.log(`Starting server on port ${environment.port}...`);
-export const server = app.listen(environment.port);
-export default server;
+  init(): Promise<this> {
+    return new Promise<this>((resolve, reject) => {
+      this.backupService.init().then(() => {
+        resolve(this);
+      }, reject);
+    });
+  }
+}
+
+export default function start(): Promise<ClinicalTrialMatchingService> {
+  return new Promise((resolve, reject) => {
+    // Use dotenv-flow to load local configuration from .env files
+    dotenv.config({
+      // The environment variable to use to set the environment
+      node_env: process.env.NODE_ENV,
+      // The default environment to use if none is set
+      default_node_env: 'development'
+    });
+    const service = new BreastCancerTrialsService(configFromEnv(''));
+    service.init().then(() => {
+      service.listen();
+      resolve(service);
+    }, reject);
+  });
+}
+
+/* istanbul ignore next: can't exactly load this directly via test case */
+if (module.parent === null) {
+  start().catch((error) => {
+    console.error('Could not start service:');
+    console.error(error);
+  });
+}
