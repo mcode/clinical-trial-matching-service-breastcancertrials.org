@@ -3,7 +3,7 @@
  * Retrieves api response as promise to be used in conversion to fhir ResearchStudy
  */
 
-import { ClinicalTrialGovService, fhir, ResearchStudy, SearchSet, ServiceConfiguration } from 'clinical-trial-matching-service';
+import { ClinicalTrialGovService, fhir, SearchSet, ServiceConfiguration } from 'clinical-trial-matching-service';
 import { TrialResponse } from './breastcancertrials';
 import { convertToResearchStudy } from './research-study';
 
@@ -15,7 +15,7 @@ import { IncomingMessage } from 'http';
 type JsonObject = Record<string, unknown> | Array<unknown>;
 
 export interface QueryConfiguration extends ServiceConfiguration {
-  endpoint?: string;
+  api_endpoint?: string;
 }
 
 export class APIError extends Error {
@@ -30,10 +30,10 @@ export class APIError extends Error {
  */
 export function createClinicalTrialLookup(configuration: QueryConfiguration, backupService: ClinicalTrialGovService): (patientBundle: Bundle) => Promise<SearchSet> {
   // Raise errors on missing configuration
-  if (typeof configuration.endpoint !== 'string') {
-    throw new Error('Missing endpoint in configuration');
+  if (typeof configuration.api_endpoint !== 'string') {
+    throw new Error('Missing API_ENDPOINT in configuration');
   }
-  const endpoint = configuration.endpoint;
+  const endpoint = configuration.api_endpoint;
   return function getMatchingClinicalTrials(patientBundle: Bundle): Promise<SearchSet> {
     // For now, the full patient bundle is the query
     return sendQuery(endpoint, JSON.stringify(patientBundle)).then((result) => {
