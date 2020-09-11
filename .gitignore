@@ -7,7 +7,7 @@
 
 # Ignore installed modules
 /node_modules
-/AllPublicXML
+/clinicaltrial-backup-cache
 
 # Ignore Instanbul coverage files
 /.nyc_output
