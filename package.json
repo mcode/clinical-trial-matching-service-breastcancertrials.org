@@ -26,7 +26,7 @@
     "clinical-trial-matching-service": "github:mcode/clinical-trial-matching-service",
     "dotenv-flow": "^3.2.0",
     "express": "^4.17.1",
-    "node-fetch": "^2.6.0",
+    "node-fetch": "^2.6.1",
     "xml2json": "^0.12.0"
   },
   "devDependencies": {
