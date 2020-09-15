@@ -4,7 +4,7 @@
  */
 
 import { ClinicalTrialGovService, fhir, SearchSet, ServiceConfiguration } from 'clinical-trial-matching-service';
-import { TrialResponse } from './breastcancertrials';
+import { MedicationCodeableConcept, rxNormSnomedMapping, TrialResponse } from './breastcancertrials';
 import { convertToResearchStudy } from './research-study';
 
 type Bundle = fhir.Bundle;
@@ -36,7 +36,7 @@ export function createClinicalTrialLookup(configuration: QueryConfiguration, bac
   const endpoint = configuration.api_endpoint;
   return function getMatchingClinicalTrials(patientBundle: Bundle): Promise<SearchSet> {
     // For now, the full patient bundle is the query
-    return sendQuery(endpoint, JSON.stringify(patientBundle)).then((result) => {
+    return sendQuery(endpoint, JSON.stringify(mapRxNormToSnomed(patientBundle))).then((result) => {
       // Convert the result to a SearchSet
       return backupService.downloadTrials(result.map(trialResponse => trialResponse.trialId)).then(() => {
         return Promise.all(result.map(async (trialResponse) => {
@@ -122,6 +122,43 @@ export class APIQuery {
     }
   }
 */
+
+/*
+ * Maps the Relevant RxNorm codes in the patient bundle to SNOMED Equivilants.
+ */
+function mapRxNormToSnomed(patientBundle: Bundle): Bundle {
+
+  var resourceCount: number = 0;
+  for (const entry of patientBundle.entry) {
+    if (!('resource' in entry)) {
+      // Skip bad entries
+      continue;
+    }
+    // If the current resource is a MedicationStatement...
+    if(entry.resource.resourceType == 'MedicationStatement') {
+      // Cast to a medicationStatementMapping to access the `medicationCodeableConcept`
+      var medicationCodeableConcept = entry.resource['medicationCodeableConcept'] as MedicationCodeableConcept;
+      console.log('MedicationCodeableConcept: ' + medicationCodeableConcept);
+      // Check the medication statement codes for conversion.
+      var medicationCount: number = 0;
+      for(var coding of medicationCodeableConcept.coding) {
+        console.log('Checking ' + coding);
+        let potentialNewCode: string = rxNormSnomedMapping.get(coding.code);
+        if(potentialNewCode != undefined){
+          console.log('Potential New Code: ' + potentialNewCode)
+          // Code exists in the RxNorm-SNOMED mapping; update it.
+          medicationCodeableConcept.coding[medicationCount].code = potentialNewCode;
+          medicationCodeableConcept.coding[medicationCount].display = 'SNOMED';
+          // Update the medicationCodeableConcept in the current resource.
+          patientBundle.entry[resourceCount].resource['medicationCodeableConcept'] = medicationCodeableConcept;
+        }
+        medicationCount++;
+      }
+    }
+    resourceCount++;
+  }
+  return patientBundle;
+}
 
 function sendQuery(endpoint: string, query: string): Promise<TrialResponse[]> {
   return new Promise((resolve, reject) => {
