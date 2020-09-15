@@ -5,6 +5,8 @@
  * small subset.
  */
 
+import { MedicationCodeableConcept } from "./breastcancertrials";
+
 /**
  * Mark URLs
  */
@@ -48,6 +50,12 @@ export interface Condition extends BaseResource {
   code: Code;
 }
 
-export type Resource = Condition | Parameters;
+export interface MedicationStatement extends BaseResource {
+  resourceType: 'MedicationStatement';
+  code: Code;
+  medicationCodeableConcept: MedicationCodeableConcept;
+}
+
+export type Resource = Condition | Parameters | MedicationStatement;
 
 export default Bundle;

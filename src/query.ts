@@ -8,6 +8,7 @@ import { Bundle, Condition } from './bundle';
 import http from 'http'; // changed from https
 import { IncomingMessage } from 'http';
 import Configuration from "./env";
+import { MedicationCodeableConcept, rxNormSnomedMapping } from './breastcancertrials';
 
 type JsonObject = Record<string, unknown> | Array<unknown>;
 
@@ -455,10 +456,46 @@ export class APIQuery {
 /** Converts patient Bundle (stored within request to server) --> Promise < JSON>
  * @param reqBody The body of the request containing patient bundle data
  */
-
 export function getResponse(patientBundle: Bundle) : Promise<JsonObject> {
     //const query = (new APIQuery(patientBundle)).toQuery();
-    return sendQuery(JSON.stringify(patientBundle)); // For now, the full patient bundle is the query
+    return sendQuery(JSON.stringify(mapRxNormToSnomed(patientBundle))); // For now, the full patient bundle is the query
+}
+
+/**
+ * Maps the Relevant RxNorm codes in the patient bundle to SNOMED Equivilants.
+ */
+function mapRxNormToSnomed(patientBundle: Bundle): Bundle {
+
+  var resourceCount: number = 0;
+  for (const entry of patientBundle.entry) {
+    if (!('resource' in entry)) {
+      // Skip bad entries
+      continue;
+    }
+    // If the current resource is a MedicationStatement...
+    if(entry.resource.resourceType == 'MedicationStatement') {
+      // Cast to a medicationStatementMapping to access the `medicationCodeableConcept`
+      var medicationCodeableConcept = entry.resource.medicationCodeableConcept;
+      console.log('MedicationCodeableConcept: ' + medicationCodeableConcept);
+      // Check the medication statement codes for conversion.
+      var medicationCount: number = 0;
+      for(var coding of medicationCodeableConcept.coding) {
+        console.log('Checking ' + coding);
+        let potentialNewCode: string = rxNormSnomedMapping.get(coding.code);
+        if(potentialNewCode != undefined){
+          console.log('Potential New Code: ' + potentialNewCode)
+          // Code exists in the RxNorm-SNOMED mapping; update it.
+          medicationCodeableConcept.coding[medicationCount].code = potentialNewCode;
+          medicationCodeableConcept.coding[medicationCount].display = 'SNOMED';
+          // Update the medicationCodeableConcept in the current resource.
+          patientBundle.entry[resourceCount].resource['medicationCodeableConcept'] = medicationCodeableConcept;
+        }
+        medicationCount++;
+      }
+    }
+    resourceCount++;
+  }
+  return patientBundle;
 }
 
 function sendQuery(query: string): Promise<JsonObject> {
