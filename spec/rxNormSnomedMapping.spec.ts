@@ -2,10 +2,9 @@ import { fhir } from "clinical-trial-matching-service";
 import { mapRxNormToSnomed } from "../src/query";
 import fs from "fs";
 import path from "path";
-import { BUNDLE_TYPES } from "clinical-trial-matching-service/dist/fhir-types";
 import { MedicationCodeableConcept } from "../src/breastcancertrials";
 
-describe("RxNormSnomedMappingTests", async () => {
+describe("RxNormSnomedMappingTests", () => {
   // Setup
   let testPatientBundle: fhir.Bundle;
   beforeAll(() => {

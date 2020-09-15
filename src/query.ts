@@ -137,10 +137,10 @@ export function mapRxNormToSnomed(patientBundle: Bundle): Bundle {
     // If the current resource is a MedicationStatement...
     if(entry.resource.resourceType == 'MedicationStatement') {
       // Cast to a MedicationCodeableConcept to access the coding attributes.
-      let medicationCodeableConcept = entry.resource['medicationCodeableConcept'] as MedicationCodeableConcept;
+      const medicationCodeableConcept = entry.resource['medicationCodeableConcept'] as MedicationCodeableConcept;
       // Check all the medication statement codes for conversion.
       let medicationCount = 0;
-      for(let coding of medicationCodeableConcept.coding) {
+      for(const coding of medicationCodeableConcept.coding) {
         const potentialNewCode: string = rxNormSnomedMapping.get(coding.code);
         if(potentialNewCode != undefined){
           // Code exists in the RxNorm-SNOMED mapping; update it.
