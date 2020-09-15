@@ -81,8 +81,7 @@ export const phaseDisplayMap = new Map<string, string>([ // Also guesswork
     ["115264", "96287002"],
     ["46041", "96290008"],
     ["993449", "446321003"],
-    ["77655", "395926009"],
-    ["198240", "TEST-REMOVE-THIS"]
+    ["77655", "395926009"]
   ]);
 
 export interface TrialResponse {

@@ -126,7 +126,7 @@ export class APIQuery {
 /*
  * Maps the Relevant RxNorm codes in the patient bundle to SNOMED Equivilants.
  */
-function mapRxNormToSnomed(patientBundle: Bundle): Bundle {
+export function mapRxNormToSnomed(patientBundle: Bundle): Bundle {
 
   var resourceCount: number = 0;
   for (const entry of patientBundle.entry) {
@@ -148,7 +148,7 @@ function mapRxNormToSnomed(patientBundle: Bundle): Bundle {
           console.log('Potential New Code: ' + potentialNewCode)
           // Code exists in the RxNorm-SNOMED mapping; update it.
           medicationCodeableConcept.coding[medicationCount].code = potentialNewCode;
-          medicationCodeableConcept.coding[medicationCount].display = 'SNOMED';
+          medicationCodeableConcept.coding[medicationCount].system = 'http://snomed.info/sct';
           // Update the medicationCodeableConcept in the current resource.
           patientBundle.entry[resourceCount].resource['medicationCodeableConcept'] = medicationCodeableConcept;
         }
