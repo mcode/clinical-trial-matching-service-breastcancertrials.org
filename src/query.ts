@@ -128,7 +128,7 @@ export class APIQuery {
  */
 export function mapRxNormToSnomed(patientBundle: Bundle): Bundle {
 
-  var resourceCount: number = 0;
+  let resourceCount = 0;
   for (const entry of patientBundle.entry) {
     if (!('resource' in entry)) {
       // Skip bad entries
@@ -136,16 +136,13 @@ export function mapRxNormToSnomed(patientBundle: Bundle): Bundle {
     }
     // If the current resource is a MedicationStatement...
     if(entry.resource.resourceType == 'MedicationStatement') {
-      // Cast to a medicationStatementMapping to access the `medicationCodeableConcept`
-      var medicationCodeableConcept = entry.resource['medicationCodeableConcept'] as MedicationCodeableConcept;
-      console.log('MedicationCodeableConcept: ' + medicationCodeableConcept);
-      // Check the medication statement codes for conversion.
-      var medicationCount: number = 0;
-      for(var coding of medicationCodeableConcept.coding) {
-        console.log('Checking ' + coding);
-        let potentialNewCode: string = rxNormSnomedMapping.get(coding.code);
+      // Cast to a MedicationCodeableConcept to access the coding attributes.
+      let medicationCodeableConcept = entry.resource['medicationCodeableConcept'] as MedicationCodeableConcept;
+      // Check all the medication statement codes for conversion.
+      let medicationCount = 0;
+      for(let coding of medicationCodeableConcept.coding) {
+        const potentialNewCode: string = rxNormSnomedMapping.get(coding.code);
         if(potentialNewCode != undefined){
-          console.log('Potential New Code: ' + potentialNewCode)
           // Code exists in the RxNorm-SNOMED mapping; update it.
           medicationCodeableConcept.coding[medicationCount].code = potentialNewCode;
           medicationCodeableConcept.coding[medicationCount].system = 'http://snomed.info/sct';
