@@ -1,3 +1,7 @@
+import stripBom from "strip-bom-stream";
+import fs from "fs";
+import csv from "csv-parser";
+
 export const phaseCodeMap = new Map<string, string>([
   // this is guesswork
   ["NA", "n-a"],
@@ -24,12 +28,9 @@ export const phaseDisplayMap = new Map<string, string>([
   ["IV", "Phase 4"],
 ]);
 
-export var rxnormSnomedMapping = new Map<string, string>();
+export const rxnormSnomedMapping = new Map<string, string>();
 
-export async function importRxnormSnomedMapping() {
-  const csv = require("csv-parser");
-  const fs = require("fs");
-  const stripBom = require("strip-bom-stream");
+export function importRxnormSnomedMapping() {
   fs.createReadStream("./data/rxnorm-snomed-mapping.csv")
     .pipe(stripBom())
     .pipe(csv())
