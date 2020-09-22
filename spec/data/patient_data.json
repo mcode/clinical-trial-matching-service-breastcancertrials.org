@@ -242,7 +242,7 @@
           "coding": [
             {
               "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
-              "code": "51499",
+              "code": "904425",
               "display": "Paclitaxel 100 MG Injection"
             }
           ],
@@ -385,7 +385,69 @@
           "coding": [
             {
               "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
-              "code": "11473",
+              "code": "1156253",
+              "display": "Paclitaxel 100 MG Injection"
+            }
+          ],
+          "text": "Paclitaxel 100 MG Injection"
+        },
+        "subject": {
+          "reference": "urn:uuid:1e208b6b-77f1-4808-a32b-9f9caf1ec334"
+        },
+        "effectiveDateTime": "2017-07-28T23:41:09-04:00"
+      },
+      "request": {
+        "method": "POST",
+        "url": "MedicationStatement"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:6556b6b3-678c-4fd6-9309-8df7742f6e4e",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "6556b6b3-678c-4fd6-9309-8df7742f6e4e",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-related-medication-statement"
+          ]
+        },
+        "status": "completed",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "583218",
+              "display": "Paclitaxel 100 MG Injection"
+            }
+          ],
+          "text": "Paclitaxel 100 MG Injection"
+        },
+        "subject": {
+          "reference": "urn:uuid:1e208b6b-77f1-4808-a32b-9f9caf1ec334"
+        },
+        "effectiveDateTime": "2017-07-28T23:41:09-04:00"
+      },
+      "request": {
+        "method": "POST",
+        "url": "MedicationStatement"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:6556b6b3-678c-4fd6-9309-8df7742f6e4e",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "6556b6b3-678c-4fd6-9309-8df7742f6e4e",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-related-medication-statement"
+          ]
+        },
+        "status": "completed",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "583214",
               "display": "Paclitaxel 100 MG Injection"
             }
           ],

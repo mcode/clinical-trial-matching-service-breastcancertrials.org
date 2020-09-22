@@ -4,7 +4,7 @@
  */
 
 import { ClinicalTrialGovService, fhir, SearchSet, ServiceConfiguration } from 'clinical-trial-matching-service';
-import { MedicationCodeableConcept, rxNormSnomedMapping, TrialResponse } from './breastcancertrials';
+import { importRxnormSnomedMapping, MedicationCodeableConcept, rxnormSnomedMapping, TrialResponse } from './breastcancertrials';
 import { convertToResearchStudy } from './research-study';
 
 type Bundle = fhir.Bundle;
@@ -141,7 +141,7 @@ export function mapRxNormToSnomed(patientBundle: Bundle): Bundle {
       // Check all the medication statement codes for conversion.
       let medicationCount = 0;
       for(const coding of medicationCodeableConcept.coding) {
-        const potentialNewCode: string = rxNormSnomedMapping.get(coding.code);
+        const potentialNewCode: string = rxnormSnomedMapping.get(coding.code);
         if(potentialNewCode != undefined){
           // Code exists in the RxNorm-SNOMED mapping; update it.
           medicationCodeableConcept.coding[medicationCount].code = potentialNewCode;
