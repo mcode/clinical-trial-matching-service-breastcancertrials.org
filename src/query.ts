@@ -4,7 +4,7 @@
  */
 
 import { ClinicalTrialGovService, fhir, SearchSet, ServiceConfiguration } from 'clinical-trial-matching-service';
-import { importRxnormSnomedMapping, MedicationCodeableConcept, rxnormSnomedMapping, TrialResponse } from './breastcancertrials';
+import { MedicationCodeableConcept, rxnormSnomedMapping, TrialResponse } from './breastcancertrials';
 import { convertToResearchStudy } from './research-study';
 
 type Bundle = fhir.Bundle;
