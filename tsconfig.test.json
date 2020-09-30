@@ -4,6 +4,6 @@
     "outDir": "dist-spec"
   },
   "include": [
-    "./spec/**/*", "./src/**/*.ts", "./data/**/*"
+    "./spec/**/*", "./src/**/*.ts"
   ]
 }

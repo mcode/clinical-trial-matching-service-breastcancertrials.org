@@ -21,6 +21,7 @@ export class BreastCancerTrialsService extends ClinicalTrialMatchingService {
   init(): Promise<this> {
     return new Promise<this>((resolve, reject) => {
       this.backupService.init().then(() => {
+        
         resolve(this);
       }, reject);
     });
