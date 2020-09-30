@@ -29,29 +29,51 @@ export const phaseDisplayMap = new Map<string, string>([
 ]);
 
 export const rxnormSnomedMapping = new Map<string, string>();
+export const stageSnomedMapping = new Map<string, string>();
 
-export function importRxnormSnomedMapping(): Promise<Map<string, string>> {
+/*
+ * Imports the mapping CSV at the given file path into the given variable.
+ */
+export function importCodeMappingFile(filePath: string, mapping: Map<string,string>): Promise<Map<string, string>> {
   return new Promise((resolve, reject) => {
-    fs.createReadStream("./data/rxnorm-snomed-mapping.csv")
+    fs.createReadStream(filePath)
       .pipe(stripBom())
       .pipe(csv())
-      .on("data", (data: { rxnorm: string; snomed: string }, error) => {
+      .on("data", (data: { rxnorm: string; snomed: string; qualifiervaluesnomed: string; clinicalfindingsnomed: string }, error: any) => {
         if (error) {
-          console.error("ERROR: Could not load RxNorm-SNOMED mapping.");
+          console.error("ERROR: Could not load mapping.");
           reject(error);
           return;
         }
         try {
-          rxnormSnomedMapping.set(data.rxnorm, data.snomed);
+          if(data.rxnorm != undefined){
+            mapping.set(data.rxnorm, data.snomed);
+          } else if (data.qualifiervaluesnomed != undefined){
+            mapping.set(data.qualifiervaluesnomed, data.clinicalfindingsnomed);
+          } else {
+            console.error("ERROR: Invalid Input Mapping File.");
+            reject(error);
+            return;
+          }
         } catch (ex) {
           reject(error);
         }
       })
       .on("end", () => {
-        console.log("Loaded RxNorm-SNOMED mapping.");
-        resolve(rxnormSnomedMapping);
+        console.log("Loaded Code Mapping: " + mapping.keys.length);
+        resolve(mapping);
       });
   });
+}
+
+// Imports RxNorm to SNOMED Code Mapping.
+export function importRxnormSnomedMapping(): Promise<Map<string, string>> {
+  return importCodeMappingFile('./data/rxnorm-snomed-mapping.csv', rxnormSnomedMapping);
+}
+
+// Imports Stage SNOMED Code Mapping.
+export function importStageSnomedMapping(): Promise<Map<string, string>> {
+  return importCodeMappingFile('./data/stage-snomed-mapping.csv', stageSnomedMapping);
 }
 
 export interface TrialResponse {

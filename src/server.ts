@@ -5,7 +5,7 @@ import ClinicalTrialMatchingService, {
   configFromEnv,
   ClinicalTrialGovService,
 } from "clinical-trial-matching-service";
-import { importRxnormSnomedMapping } from "./breastcancertrials";
+import { importRxnormSnomedMapping, importStageSnomedMapping } from "./breastcancertrials";
 import * as dotenv from "dotenv-flow";
 
 export class BreastCancerTrialsService extends ClinicalTrialMatchingService {
@@ -25,7 +25,9 @@ export class BreastCancerTrialsService extends ClinicalTrialMatchingService {
     return Promise.all([
       this.backupService.init(),
       // Import RxNorm-SNOMED Mapping
-      importRxnormSnomedMapping()
+      importRxnormSnomedMapping(),
+      // Import stage-SNOMED Mapping
+      importStageSnomedMapping()
     ]).then(() => this);
   }
 }
