@@ -30,7 +30,7 @@ export const phaseDisplayMap = new Map<string, string>([
 
 export const rxnormSnomedMapping = new Map<string, string>();
 
-export function importRxnormSnomedMapping() {
+export function importRxnormSnomedMapping(): Promise<Map<string, string>> {
   return new Promise((resolve, reject) => {
     fs.createReadStream("./data/rxnorm-snomed-mapping.csv")
       .pipe(stripBom())
@@ -51,7 +51,7 @@ export function importRxnormSnomedMapping() {
         console.log("Loaded RxNorm-SNOMED mapping.");
         resolve(rxnormSnomedMapping);
       });
-  }).catch((err) => console.error(err));
+  });
 }
 
 export interface TrialResponse {

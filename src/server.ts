@@ -1,9 +1,12 @@
 // This stub handles starting the server.
 
-import { createClinicalTrialLookup } from './query';
-import ClinicalTrialMatchingService, { configFromEnv, ClinicalTrialGovService } from 'clinical-trial-matching-service';
-import { importRxnormSnomedMapping } from './breastcancertrials';
-import * as dotenv from 'dotenv-flow';
+import { createClinicalTrialLookup } from "./query";
+import ClinicalTrialMatchingService, {
+  configFromEnv,
+  ClinicalTrialGovService,
+} from "clinical-trial-matching-service";
+import { importRxnormSnomedMapping } from "./breastcancertrials";
+import * as dotenv from "dotenv-flow";
 
 export class BreastCancerTrialsService extends ClinicalTrialMatchingService {
   backupService: ClinicalTrialGovService;
@@ -11,22 +14,21 @@ export class BreastCancerTrialsService extends ClinicalTrialMatchingService {
     // Need to instantiate the backup service first - note that it is NOT
     // initialized here
     // TODO: Make this configurable
-    // Import RxNorm-SNOMED Mapping
-    importRxnormSnomedMapping().catch(() => "Loaded");
-    const backupService = new ClinicalTrialGovService('clinicaltrial-backup-cache');
+    const backupService = new ClinicalTrialGovService(
+      "clinicaltrial-backup-cache"
+    );
     super(createClinicalTrialLookup(config, backupService), config);
     this.backupService = backupService;
   }
 
   init(): Promise<this> {
-    return new Promise<this>((resolve, reject) => {
-      this.backupService.init().then(() => {
-        resolve(this);
-      }, reject);
-    });
+    return Promise.all([
+      this.backupService.init(),
+      // Import RxNorm-SNOMED Mapping
+      importRxnormSnomedMapping()
+    ]).then(() => this);
   }
 }
-
 
 export default function start(): Promise<ClinicalTrialMatchingService> {
   return new Promise((resolve, reject) => {
@@ -35,9 +37,9 @@ export default function start(): Promise<ClinicalTrialMatchingService> {
       // The environment variable to use to set the environment
       node_env: process.env.NODE_ENV,
       // The default environment to use if none is set
-      default_node_env: 'development'
+      default_node_env: "development",
     });
-    const service = new BreastCancerTrialsService(configFromEnv(''));
+    const service = new BreastCancerTrialsService(configFromEnv(""));
     service.init().then(() => {
       service.listen();
       resolve(service);
@@ -48,7 +50,7 @@ export default function start(): Promise<ClinicalTrialMatchingService> {
 /* istanbul ignore next: can't exactly load this directly via test case */
 if (module.parent === null) {
   start().catch((error) => {
-    console.error('Could not start service:');
+    console.error("Could not start service:");
     console.error(error);
   });
 }
