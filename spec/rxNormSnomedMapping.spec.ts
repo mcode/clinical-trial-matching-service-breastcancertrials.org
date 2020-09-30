@@ -11,7 +11,7 @@ describe("RxNormSnomedMappingTests", () => {
   // Setup
   let testPatientBundle: fhir.Bundle;
   beforeAll(() => {
-    importRxnormSnomedMapping();
+    importRxnormSnomedMapping().catch(() => "Loaded");
     return new Promise((resolve, reject) => {
       const patientDataPath = path.join(
         __dirname,

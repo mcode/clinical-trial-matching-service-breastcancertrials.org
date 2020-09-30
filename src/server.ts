@@ -12,7 +12,7 @@ export class BreastCancerTrialsService extends ClinicalTrialMatchingService {
     // initialized here
     // TODO: Make this configurable
     // Import RxNorm-SNOMED Mapping
-    importRxnormSnomedMapping();
+    importRxnormSnomedMapping().catch(() => "Loaded");
     const backupService = new ClinicalTrialGovService('clinicaltrial-backup-cache');
     super(createClinicalTrialLookup(config, backupService), config);
     this.backupService = backupService;
@@ -21,7 +21,6 @@ export class BreastCancerTrialsService extends ClinicalTrialMatchingService {
   init(): Promise<this> {
     return new Promise<this>((resolve, reject) => {
       this.backupService.init().then(() => {
-        
         resolve(this);
       }, reject);
     });
