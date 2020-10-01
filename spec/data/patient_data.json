@@ -279,12 +279,7 @@
           "coding": [
             {
               "system": "http://loinc.org",
-              "code": "48676-1",
-              "display": "HER2 [Interpretation] in Tissue"
-            },
-            {
-              "system": "http://loinc.org",
-              "code": "85319-2",
+              "code": "258215001",
               "display": "HER2 [Presence] in Breast cancer specimen by Immune stain"
             }
           ],

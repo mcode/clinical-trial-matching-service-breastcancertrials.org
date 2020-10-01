@@ -60,7 +60,7 @@ export function importCodeMappingFile(filePath: string, mapping: Map<string,stri
         }
       })
       .on("end", () => {
-        console.log("Loaded Code Mapping: " + mapping.keys.length);
+        console.log("Loaded code mapping with: " + mapping.size + " entries.");
         resolve(mapping);
       });
   });
@@ -71,7 +71,7 @@ export function importRxnormSnomedMapping(): Promise<Map<string, string>> {
   return importCodeMappingFile('./data/rxnorm-snomed-mapping.csv', rxnormSnomedMapping);
 }
 
-// Imports Stage SNOMED Code Mapping.
+// Imports Stage SNOMED Code Mapping from Qualifer Value Stage Codes and Clincal Finding Stage Codes.
 export function importStageSnomedMapping(): Promise<Map<string, string>> {
   return importCodeMappingFile('./data/stage-snomed-mapping.csv', stageSnomedMapping);
 }
