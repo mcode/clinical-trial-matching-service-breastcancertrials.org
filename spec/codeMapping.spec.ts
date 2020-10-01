@@ -4,15 +4,23 @@ import fs from "fs";
 import path from "path";
 import {
   importRxnormSnomedMapping,
-  Coding, Stage, rxnormSnomedMapping, stageSnomedMapping, importStageSnomedMapping
+  Coding,
+  Stage,
+  rxnormSnomedMapping,
+  stageSnomedMapping,
+  importStageSnomedMapping,
 } from "../src/breastcancertrials";
 
 describe("Code Mapping Tests.", () => {
   // Setup
   let testPatientBundle: fhir.Bundle;
   beforeAll(() => {
-    importRxnormSnomedMapping().catch(() => "Loaded RxNorm-SNOMED Mapping for Tests.");
-    importStageSnomedMapping().catch(() => "Loaded Staging SNOMED Mapping for Tests.");
+    importRxnormSnomedMapping().catch(
+      () => "Loaded RxNorm-SNOMED Mapping for Tests."
+    );
+    importStageSnomedMapping().catch(
+      () => "Loaded Staging SNOMED Mapping for Tests."
+    );
     return new Promise((resolve, reject) => {
       const patientDataPath = path.join(
         __dirname,
@@ -37,9 +45,13 @@ describe("Code Mapping Tests.", () => {
 
   it("Test Coding Mappings.", function () {
     // Map the RxNorm-SNOMED codes in the patient bundle.
-    performCodeMapping(testPatientBundle, 'MedicationStatement', rxnormSnomedMapping);
+    performCodeMapping(
+      testPatientBundle,
+      "MedicationStatement",
+      rxnormSnomedMapping
+    );
     // Map the Staging SNOMED codes in the patient bundle.
-    performCodeMapping(testPatientBundle, 'Condition', stageSnomedMapping);
+    performCodeMapping(testPatientBundle, "Condition", stageSnomedMapping);
 
     // Test that RxNorm code 904425 gets mapped to SNOMED 96290008 (located in entry[1] in patient_data)
     expect(
@@ -52,40 +64,47 @@ describe("Code Mapping Tests.", () => {
         "medicationCodeableConcept"
       ] as Coding).coding[0].system
     ).toBe("http://snomed.info/sct");
-    // Test that RxNorm code 34566 Does NOT map to anything else (located in entry[3] in patient_data).
+    // Test that Staging summary SNOMED code 258215001 gets mapped to SNOMED 13104003 (located in entry[2], stage[0], coding[1] in patient_data)
+    expect(
+      (testPatientBundle.entry[2].resource["stage"] as Stage[])[0].summary
+        .coding[1].code
+    ).toBe("13104003");
+    expect(
+      (testPatientBundle.entry[2].resource["stage"] as Stage[])[0].summary
+        .coding[1].system
+    ).toBe("http://snomed.info/sct");
+    // Test that Staging type SNOMED code 261639007 gets mapped to SNOMED 64062008 (located in entry[2], stage[0], coding[0] in patient_data)
+    expect(
+      (testPatientBundle.entry[2].resource["stage"] as Stage[])[0].type
+        .coding[0].code
+    ).toBe("64062008");
+    expect(
+      (testPatientBundle.entry[2].resource["stage"] as Stage[])[0].type
+        .coding[0].system
+    ).toBe("http://snomed.info/sct");
+    // Test that LOINC code 34566 Does NOT map to anything else (located in entry[3] in patient_data).
     expect(
       (testPatientBundle.entry[3].resource[
-        "medicationCodeableConcept"
+        "code"
       ] as Coding).coding[0].code
     ).toBe("34566");
     expect(
       (testPatientBundle.entry[3].resource[
-        "medicationCodeableConcept"
+        "code"
       ] as Coding).coding[0].system
-    ).toBe("http://www.nlm.nih.gov/research/umls/rxnorm");
-    // Test that RxNorm code 1156253 gets mapped to SNOMED 395926009 (located in entry[4] in patient_data).
+    ).toBe("http://loinc.org");
+    // Test that RxNorm code 1156253 gets mapped to SNOMED 395926009 (located in entry[5] in patient_data).
     expect(
-      (testPatientBundle.entry[4].resource[
+      (testPatientBundle.entry[5].resource[
         "medicationCodeableConcept"
       ] as Coding).coding[0].code
     ).toBe("395926009");
     expect(
-      (testPatientBundle.entry[4].resource[
-        "medicationCodeableConcept"
-      ] as Coding).coding[0].system
-    ).toBe("http://snomed.info/sct");
-    // Test that RxNorm code 583218 gets mapped to SNOMED 426653008 (located in entry[4] in patient_data).
-    expect(
-      (testPatientBundle.entry[5].resource[
-        "medicationCodeableConcept"
-      ] as Coding).coding[0].code
-    ).toBe("426653008");
-    expect(
       (testPatientBundle.entry[5].resource[
         "medicationCodeableConcept"
       ] as Coding).coding[0].system
     ).toBe("http://snomed.info/sct");
-    // Test that RxNorm code 583214 gets mapped to SNOMED 426653008 (located in entry[4] in patient_data).
+    // Test that RxNorm code 583218 gets mapped to SNOMED 426653008 (located in entry[6] in patient_data).
     expect(
       (testPatientBundle.entry[6].resource[
         "medicationCodeableConcept"
@@ -96,19 +115,34 @@ describe("Code Mapping Tests.", () => {
         "medicationCodeableConcept"
       ] as Coding).coding[0].system
     ).toBe("http://snomed.info/sct");
-
-
-
-    // Test that Staging SNOMED code 261638004 gets mapped to SNOMED 73082003 (located in entry[7] in patient_data)
+    // Test that RxNorm code 583214 gets mapped to SNOMED 426653008 (located in entry[7] in patient_data).
     expect(
       (testPatientBundle.entry[7].resource[
-        "stage"
-      ] as Stage[])[0].summary.coding[0].code
+        "medicationCodeableConcept"
+      ] as Coding).coding[0].code
+    ).toBe("426653008");
+    expect(
+      (testPatientBundle.entry[7].resource[
+        "medicationCodeableConcept"
+      ] as Coding).coding[0].system
+    ).toBe("http://snomed.info/sct");
+    // Test that Staging summary SNOMED code 261638004 gets mapped to SNOMED 73082003 (located in entry[8], stage[0] in patient_data)
+    expect(
+      (testPatientBundle.entry[8].resource["stage"] as Stage[])[0].summary
+        .coding[0].code
     ).toBe("73082003");
     expect(
-      (testPatientBundle.entry[7].resource[
-        "stage"
-      ] as Stage[])[0].summary.coding[0].system
+      (testPatientBundle.entry[8].resource["stage"] as Stage[])[0].summary
+        .coding[0].system
+    ).toBe("http://snomed.info/sct");
+    // Test that Staging type SNOMED code 258228008 gets mapped to SNOMED 2640006 (located in entry[9], stage[1] in patient_data)
+    expect(
+      (testPatientBundle.entry[9].resource["stage"] as Stage[])[1].type
+        .coding[0].code
+    ).toBe("2640006");
+    expect(
+      (testPatientBundle.entry[9].resource["stage"] as Stage[])[1].type
+        .coding[0].system
     ).toBe("http://snomed.info/sct");
   });
 });

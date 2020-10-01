@@ -186,7 +186,8 @@ export function performCodeMapping(
     // If the current resource is of the given ResourceType and is a Staging Code...
     if (
       entry.resource.resourceType == resourceType &&
-      resourceType == "Condition"
+      resourceType == "Condition" &&
+      entry.resource["stage"] != undefined
     ) {
       // Cast to a Stage[] to access the stage's coding attributes.
       let staging = entry.resource["stage"] as Stage[];
