@@ -22,7 +22,6 @@ type Bundle = fhir.Bundle;
 
 import http from "http"; // changed from https
 import { IncomingMessage } from "http";
-import { SSL_OP_SSLEAY_080_CLIENT_DH_BUG } from "constants";
 
 type JsonObject = Record<string, unknown> | Array<unknown>;
 
@@ -178,7 +177,7 @@ export function performCodeMapping(
       resourceType == "MedicationStatement"
     ) {
       // Cast to a Coding to access the medicationCodableConcept coding attributes.
-      let medicationCodableConcept = entry.resource[
+      const medicationCodableConcept = entry.resource[
         "medicationCodeableConcept"
       ] as Coding;
       mapCoding(medicationCodableConcept, mapping);
@@ -190,7 +189,7 @@ export function performCodeMapping(
       entry.resource["stage"] != undefined
     ) {
       // Cast to a Stage[] to access the stage's coding attributes.
-      let staging = entry.resource["stage"] as Stage[];
+      const staging = entry.resource["stage"] as Stage[];
       for (const stage of staging) {
         mapCoding(stage.summary, mapping);
         mapCoding(stage.type, mapping);

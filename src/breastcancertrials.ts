@@ -39,7 +39,7 @@ export function importCodeMappingFile(filePath: string, mapping: Map<string,stri
     fs.createReadStream(filePath)
       .pipe(stripBom())
       .pipe(csv())
-      .on("data", (data: { rxnorm: string; snomed: string; qualifiervaluesnomed: string; clinicalfindingsnomed: string }, error: any) => {
+      .on("data", (data: { rxnorm: string; snomed: string; qualifiervaluesnomed: string; clinicalfindingsnomed: string }, error) => {
         if (error) {
           console.error("ERROR: Could not load mapping.");
           reject(error);
@@ -60,7 +60,7 @@ export function importCodeMappingFile(filePath: string, mapping: Map<string,stri
         }
       })
       .on("end", () => {
-        console.log("Loaded code mapping with: " + mapping.size + " entries.");
+        console.log("Loaded code mapping with: " + mapping.size.toString() + " entries.");
         resolve(mapping);
       });
   });
