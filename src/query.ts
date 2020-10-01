@@ -4,7 +4,7 @@
  */
 
 import { ClinicalTrialGovService, fhir, SearchSet, ServiceConfiguration } from 'clinical-trial-matching-service';
-import { MedicationCodeableConcept, rxnormSnomedMapping, TrialResponse } from './breastcancertrials';
+import { BaseResourceCode, rxnormSnomedMapping, stageSnomedMapping, TrialResponse } from './breastcancertrials';
 import { convertToResearchStudy } from './research-study';
 
 type Bundle = fhir.Bundle;
@@ -35,8 +35,12 @@ export function createClinicalTrialLookup(configuration: QueryConfiguration, bac
   }
   const endpoint = configuration.api_endpoint;
   return function getMatchingClinicalTrials(patientBundle: Bundle): Promise<SearchSet> {
+    // Map the RxNorm-SNOMED Codes.
+    patientBundle = mapCodes(patientBundle, 'MedicationStatement', rxnormSnomedMapping);
+    // Map the Staging SNOMED Codes.
+    patientBundle = mapCodes(patientBundle, 'Observation', stageSnomedMapping);
     // For now, the full patient bundle is the query
-    return sendQuery(endpoint, JSON.stringify(mapRxNormToSnomed(patientBundle))).then((result) => {
+    return sendQuery(endpoint, JSON.stringify(patientBundle)).then((result) => {
       // Convert the result to a SearchSet
       return backupService.downloadTrials(result.map(trialResponse => trialResponse.trialId)).then(() => {
         return Promise.all(result.map(async (trialResponse) => {
@@ -124,9 +128,9 @@ export class APIQuery {
 */
 
 /*
- * Maps the Relevant RxNorm codes in the patient bundle to SNOMED Equivilants.
+ * Maps the Relevant codes in the patient bundle to the codes in the given mapping.
  */
-export function mapRxNormToSnomed(patientBundle: Bundle): Bundle {
+export function mapCodes(patientBundle: Bundle, resourceType: string, mapping: Map<string, string>): Bundle {
 
   let resourceCount = 0;
   for (const entry of patientBundle.entry) {
@@ -134,22 +138,31 @@ export function mapRxNormToSnomed(patientBundle: Bundle): Bundle {
       // Skip bad entries
       continue;
     }
-    // If the current resource is a MedicationStatement...
-    if(entry.resource.resourceType == 'MedicationStatement') {
-      // Cast to a MedicationCodeableConcept to access the coding attributes.
-      const medicationCodeableConcept = entry.resource['medicationCodeableConcept'] as MedicationCodeableConcept;
-      // Check all the medication statement codes for conversion.
-      let medicationCount = 0;
-      for(const coding of medicationCodeableConcept.coding) {
-        const potentialNewCode: string = rxnormSnomedMapping.get(coding.code);
+    // Get the resource identifier.
+    let resourceIdentifier: string;
+    if(resourceType == 'MedicationStatement'){
+      resourceIdentifier = 'medicationCodeableConcept';
+    } else if (resourceType == 'Observation'){
+      resourceIdentifier = 'observation';
+    } else {
+      console.error("ERROR: Invalid Resource Type for Mapping.");
+    }
+    // If the current resource is of the given ResourceType...
+    if(entry.resource.resourceType == resourceType) {
+      // Cast to a BaseResource to access the coding attributes.
+      const baseResource = entry.resource[resourceIdentifier] as BaseResourceCode;
+      // Check all the codes for conversion based in the given mapping.
+      let count = 0;
+      for(const coding of baseResource.coding) {
+        const potentialNewCode: string = mapping.get(coding.code);
         if(potentialNewCode != undefined){
-          // Code exists in the RxNorm-SNOMED mapping; update it.
-          medicationCodeableConcept.coding[medicationCount].code = potentialNewCode;
-          medicationCodeableConcept.coding[medicationCount].system = 'http://snomed.info/sct';
-          // Update the medicationCodeableConcept in the current resource.
-          patientBundle.entry[resourceCount].resource['medicationCodeableConcept'] = medicationCodeableConcept;
+          // Code exists in the given mapping; update it.
+          baseResource.coding[count].code = potentialNewCode;
+          baseResource.coding[count].system = 'http://snomed.info/sct';
+          // Update the current resource with the updated baseResource.
+          patientBundle.entry[resourceCount].resource[resourceIdentifier] = baseResource;
         }
-        medicationCount++;
+        count++;
       }
     }
     resourceCount++;

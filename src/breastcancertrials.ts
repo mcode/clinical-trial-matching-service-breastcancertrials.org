@@ -107,7 +107,7 @@ export interface TrialResponse {
   numberOfSites: string;
 }
 
-export interface MedicationCodeableConcept {
+export interface BaseResourceCode {
   coding?: {
     system?: string;
     code?: string;
