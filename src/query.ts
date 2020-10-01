@@ -3,14 +3,26 @@
  * Retrieves api response as promise to be used in conversion to fhir ResearchStudy
  */
 
-import { ClinicalTrialGovService, fhir, SearchSet, ServiceConfiguration } from 'clinical-trial-matching-service';
-import { BaseResourceCode, rxnormSnomedMapping, stageSnomedMapping, TrialResponse } from './breastcancertrials';
-import { convertToResearchStudy } from './research-study';
+import {
+  ClinicalTrialGovService,
+  fhir,
+  SearchSet,
+  ServiceConfiguration,
+} from "clinical-trial-matching-service";
+import {
+  Coding,
+  Stage,
+  rxnormSnomedMapping,
+  stageSnomedMapping,
+  TrialResponse,
+} from "./breastcancertrials";
+import { convertToResearchStudy } from "./research-study";
 
 type Bundle = fhir.Bundle;
 
-import http from 'http'; // changed from https
-import { IncomingMessage } from 'http';
+import http from "http"; // changed from https
+import { IncomingMessage } from "http";
+import { SSL_OP_SSLEAY_080_CLIENT_DH_BUG } from "constants";
 
 type JsonObject = Record<string, unknown> | Array<unknown>;
 
@@ -19,7 +31,11 @@ export interface QueryConfiguration extends ServiceConfiguration {
 }
 
 export class APIError extends Error {
-  constructor(message: string, public result: IncomingMessage, public body: string) {
+  constructor(
+    message: string,
+    public result: IncomingMessage,
+    public body: string
+  ) {
     super(message);
   }
 }
@@ -28,26 +44,41 @@ export class APIError extends Error {
  * Create a new matching function using the given configuration.
  * @param configuration the configuration to use to configure the matcher
  */
-export function createClinicalTrialLookup(configuration: QueryConfiguration, backupService: ClinicalTrialGovService): (patientBundle: Bundle) => Promise<SearchSet> {
+export function createClinicalTrialLookup(
+  configuration: QueryConfiguration,
+  backupService: ClinicalTrialGovService
+): (patientBundle: Bundle) => Promise<SearchSet> {
   // Raise errors on missing configuration
-  if (typeof configuration.api_endpoint !== 'string') {
-    throw new Error('Missing API_ENDPOINT in configuration');
+  if (typeof configuration.api_endpoint !== "string") {
+    throw new Error("Missing API_ENDPOINT in configuration");
   }
   const endpoint = configuration.api_endpoint;
-  return function getMatchingClinicalTrials(patientBundle: Bundle): Promise<SearchSet> {
+  return function getMatchingClinicalTrials(
+    patientBundle: Bundle
+  ): Promise<SearchSet> {
     // Map the RxNorm-SNOMED Codes.
-    patientBundle = mapCodes(patientBundle, 'MedicationStatement', rxnormSnomedMapping);
+    patientBundle = performCodeMapping(
+      patientBundle,
+      "MedicationStatement",
+      rxnormSnomedMapping
+    );
     // Map the Staging SNOMED Codes.
-    patientBundle = mapCodes(patientBundle, 'Observation', stageSnomedMapping);
+    patientBundle = performCodeMapping(patientBundle, "Condition", stageSnomedMapping);
     // For now, the full patient bundle is the query
     return sendQuery(endpoint, JSON.stringify(patientBundle)).then((result) => {
       // Convert the result to a SearchSet
-      return backupService.downloadTrials(result.map(trialResponse => trialResponse.trialId)).then(() => {
-        return Promise.all(result.map(async (trialResponse) => {
-          const clinicalStudy = await backupService.getDownloadedTrial(trialResponse.trialId);
-          return convertToResearchStudy(trialResponse, clinicalStudy);
-        })).then(studies => new SearchSet(studies));
-      });
+      return backupService
+        .downloadTrials(result.map((trialResponse) => trialResponse.trialId))
+        .then(() => {
+          return Promise.all(
+            result.map(async (trialResponse) => {
+              const clinicalStudy = await backupService.getDownloadedTrial(
+                trialResponse.trialId
+              );
+              return convertToResearchStudy(trialResponse, clinicalStudy);
+            })
+          ).then((studies) => new SearchSet(studies));
+        });
     });
   };
 }
@@ -130,78 +161,109 @@ export class APIQuery {
 /*
  * Maps the Relevant codes in the patient bundle to the codes in the given mapping.
  */
-export function mapCodes(patientBundle: Bundle, resourceType: string, mapping: Map<string, string>): Bundle {
-
-  let resourceCount = 0;
+export function performCodeMapping(
+  patientBundle: Bundle,
+  resourceType: string,
+  mapping: Map<string, string>
+): Bundle {
   for (const entry of patientBundle.entry) {
-    if (!('resource' in entry)) {
+    if (!("resource" in entry)) {
       // Skip bad entries
       continue;
     }
-    // Get the resource identifier.
-    let resourceIdentifier: string;
-    if(resourceType == 'MedicationStatement'){
-      resourceIdentifier = 'medicationCodeableConcept';
-    } else if (resourceType == 'Observation'){
-      resourceIdentifier = 'observation';
-    } else {
-      console.error("ERROR: Invalid Resource Type for Mapping.");
+
+    // If the current resource is of the given ResourceType and is a Medication Statement...
+    if (
+      entry.resource.resourceType == resourceType &&
+      resourceType == "MedicationStatement"
+    ) {
+      // Cast to a Coding to access the medicationCodableConcept coding attributes.
+      let medicationCodableConcept = entry.resource[
+        "medicationCodeableConcept"
+      ] as Coding;
+      mapCoding(medicationCodableConcept, mapping);
     }
-    // If the current resource is of the given ResourceType...
-    if(entry.resource.resourceType == resourceType) {
-      // Cast to a BaseResource to access the coding attributes.
-      const baseResource = entry.resource[resourceIdentifier] as BaseResourceCode;
-      // Check all the codes for conversion based in the given mapping.
-      let count = 0;
-      for(const coding of baseResource.coding) {
-        const potentialNewCode: string = mapping.get(coding.code);
-        if(potentialNewCode != undefined){
-          // Code exists in the given mapping; update it.
-          baseResource.coding[count].code = potentialNewCode;
-          baseResource.coding[count].system = 'http://snomed.info/sct';
-          // Update the current resource with the updated baseResource.
-          patientBundle.entry[resourceCount].resource[resourceIdentifier] = baseResource;
-        }
-        count++;
+    // If the current resource is of the given ResourceType and is a Staging Code...
+    if (
+      entry.resource.resourceType == resourceType &&
+      resourceType == "Condition"
+    ) {
+      // Cast to a Stage[] to access the stage's coding attributes.
+      let staging = entry.resource["stage"] as Stage[];
+      for (const stage of staging) {
+        mapCoding(stage.summary, mapping);
+        mapCoding(stage.type, mapping);
       }
     }
-    resourceCount++;
   }
   return patientBundle;
 }
 
+/*
+ * Converts the codes in a given Coding based on the given mapping.
+ */
+function mapCoding(coding: Coding, mapping: Map<string, string>) {
+  // Check all the codes for conversion based on the given mapping.
+  let count = 0;
+  for (const currentCoding of coding.coding) {
+    const potentialNewCode: string = mapping.get(currentCoding.code);
+    if (potentialNewCode != undefined) {
+      // Code exists in the given mapping; update it.
+      coding.coding[count].code = potentialNewCode;
+      coding.coding[count].system = "http://snomed.info/sct";
+    }
+    count++;
+  }
+}
+
 function sendQuery(endpoint: string, query: string): Promise<TrialResponse[]> {
   return new Promise((resolve, reject) => {
-    const body = Buffer.from(query, 'utf8'); // or use samplePatient
-    console.log('Running raw query');
+    const body = Buffer.from(query, "utf8"); // or use samplePatient
+    console.log("Running raw query");
     console.log(query);
-    const request = http.request(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/fhir+json'
-      }
-    }, result => {
-      let responseBody = '';
-      result.on('data', chunk => {
-        responseBody += chunk;
-      });
-      result.on('end', () => {
-        console.log('Complete');
-        if (result.statusCode === 200) {
-          const json = JSON.parse(responseBody) as unknown;
-          if (Array.isArray(json)) {
-            // Assume it's correct
-            resolve(json as TrialResponse[]);
+    const request = http.request(
+      endpoint,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/fhir+json",
+        },
+      },
+      (result) => {
+        let responseBody = "";
+        result.on("data", (chunk) => {
+          responseBody += chunk;
+        });
+        result.on("end", () => {
+          console.log("Complete");
+          if (result.statusCode === 200) {
+            const json = JSON.parse(responseBody) as unknown;
+            if (Array.isArray(json)) {
+              // Assume it's correct
+              resolve(json as TrialResponse[]);
+            } else {
+              reject(
+                new APIError(
+                  "Unexpected JSON result from server",
+                  result,
+                  responseBody
+                )
+              );
+            }
           } else {
-            reject(new APIError('Unexpected JSON result from server', result, responseBody));
+            reject(
+              new APIError(
+                `Server returned ${result.statusCode} ${result.statusMessage}`,
+                result,
+                responseBody
+              )
+            );
           }
-        } else {
-          reject(new APIError(`Server returned ${result.statusCode} ${result.statusMessage}`, result, responseBody));
-        }
-      });
-    });
+        });
+      }
+    );
 
-    request.on('error', error => reject(error));
+    request.on("error", (error) => reject(error));
 
     request.write(body);
     request.end();

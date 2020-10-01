@@ -107,11 +107,16 @@ export interface TrialResponse {
   numberOfSites: string;
 }
 
-export interface BaseResourceCode {
+export interface Coding {
   coding?: {
     system?: string;
     code?: string;
     display?: string;
   }[];
   text: string;
+}
+
+export interface Stage {
+  type: Coding;
+  summary: Coding; 
 }
