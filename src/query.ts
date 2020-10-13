@@ -62,7 +62,11 @@ export function createClinicalTrialLookup(
       rxnormSnomedMapping
     );
     // Map the Staging SNOMED Codes.
-    patientBundle = performCodeMapping(patientBundle, "Condition", stageSnomedMapping);
+    patientBundle = performCodeMapping(
+      patientBundle,
+      "Condition",
+      stageSnomedMapping
+    );
     // For now, the full patient bundle is the query
     return sendQuery(endpoint, JSON.stringify(patientBundle)).then((result) => {
       // Convert the result to a SearchSet
@@ -216,9 +220,12 @@ function mapCoding(coding: Coding, mapping: Map<string, string>) {
   }
 }
 
-function sendQuery(endpoint: string, query: string): Promise<TrialResponse[]> {
+export function sendQuery(
+  endpoint: string,
+  query: string
+): Promise<TrialResponse[]> {
   return new Promise((resolve, reject) => {
-    const body = Buffer.from(query, "utf8"); // or use samplePatient
+    const body = Buffer.from(query, "utf8");
     console.log("Running raw query");
     console.log(query);
     const request = http.request(
@@ -237,14 +244,24 @@ function sendQuery(endpoint: string, query: string): Promise<TrialResponse[]> {
         result.on("end", () => {
           console.log("Complete");
           if (result.statusCode === 200) {
-            const json = JSON.parse(responseBody) as unknown;
-            if (Array.isArray(json)) {
-              // Assume it's correct
-              resolve(json as TrialResponse[]);
-            } else {
+            try {
+              const json = JSON.parse(responseBody) as unknown;
+              if (Array.isArray(json)) {
+                // Assume it's correct
+                resolve(json as TrialResponse[]);
+              } else {
+                reject(
+                  new APIError(
+                    "Unexpected JSON result from server",
+                    result,
+                    responseBody
+                  )
+                );
+              }
+            } catch (ex) {
               reject(
                 new APIError(
-                  "Unexpected JSON result from server",
+                  "Unexpected exception parsing server response",
                   result,
                   responseBody
                 )
