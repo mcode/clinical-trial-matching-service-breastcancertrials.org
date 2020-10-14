@@ -2,32 +2,6 @@ import stripBom from "strip-bom-stream";
 import fs from "fs";
 import csv from "csv-parser";
 
-export const phaseCodeMap = new Map<string, string>([
-  // this is guesswork
-  ["NA", "n-a"],
-  ["0", "early-phase-1"],
-  ["I", "phase-1"],
-  ["I-II", "phase-1-phase-2"],
-  ["II", "phase-2"],
-  ["II-III", "phase-2-phase-3"],
-  ["III", "phase-3"],
-  ["III-IV", "phase-3"],
-  ["IV", "phase-4"],
-]);
-
-export const phaseDisplayMap = new Map<string, string>([
-  // Also guesswork
-  ["NA", "N/A"],
-  ["0", "Early Phase 1"],
-  ["I", "Phase 1"],
-  ["I-II", "Phase 1/Phase 2"],
-  ["II", "Phase 2"],
-  ["II-III", "Phase 2/Phase 3"],
-  ["III", "Phase 3"],
-  ["III-IV", "Phase 3"],
-  ["IV", "Phase 4"],
-]);
-
 export const rxnormSnomedMapping = new Map<string, string>();
 export const stageSnomedMapping = new Map<string, string>();
 
@@ -118,5 +92,5 @@ export interface Coding {
 
 export interface Stage {
   type: Coding;
-  summary: Coding; 
+  summary: Coding;
 }

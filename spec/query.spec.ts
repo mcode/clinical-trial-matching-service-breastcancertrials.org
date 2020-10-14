@@ -10,56 +10,9 @@ import {
   sendQuery,
 } from "../src/query";
 import nock from "nock";
-import { Coding, TrialResponse } from "../src/breastcancertrials";
+import { Coding } from "../src/breastcancertrials";
 import { isResearchStudy } from "clinical-trial-matching-service/dist/fhir-types";
-
-/**
- * This creates an example trial. (It's shared between test suites.)
- */
-function createExampleTrial(): TrialResponse {
-  return {
-    resultNumber: "1",
-    trialId: "NCT12345678",
-    trialTitle: "Title",
-    scientificTitle: "Scientific Title",
-    phaseNumber: "I-II",
-    purpose: "Purpose.",
-    whoIsThisFor: "Who is this for?",
-    whatIsInvolved: "What is involved?",
-    whatIsBeingStudied: "What is being studied?",
-    learnMore: "Learn more",
-    ctGovLink: "https://clinicaltrials.gov/ct2/show/NCT03377387",
-    eligibilityCriteriaLink:
-      "https://clinicaltrials.gov/ct2/show/NCT03377387#eligibility",
-    trialCategories: ["METASTATIC", "TREATMENT_BIOLOGICAL"],
-    trialMutations: [],
-    newTrialFlag: false,
-    zip: "01780",
-    distance: "3",
-    siteName: "Example",
-    city: "Bedford",
-    state: "MA",
-    visits: "Monthly visits, ongoing",
-    latitude: 42,
-    longitude: -75,
-    contactName: "Contact",
-    contactPhone: "781-555-0100",
-    contactEmail: null,
-    noVisitsRequiredFlag: false,
-    numberOfSites: "1",
-  };
-}
-
-/**
- * Create an empty patient bundle
- */
-function createEmptyBundle(): fhir.Bundle {
-  return {
-    resourceType: "Bundle",
-    type: "collection",
-    entry: [],
-  };
-}
+import { createExampleTrialResponse, createEmptyBundle, createEmptyClinicalStudy } from "./support/factory";
 
 describe(".createClinicalTrialLookup", () => {
   it("raises an error if missing an endpoint", () => {
@@ -92,33 +45,7 @@ describe(".createClinicalTrialLookup", () => {
         return Promise.resolve();
       });
       spyOn(backupService, "getDownloadedTrial").and.callFake(() => {
-        return Promise.resolve({
-          required_header: [
-            {
-              download_date: [""],
-              link_text: [""],
-              url: [""],
-            },
-          ],
-          id_info: [
-            {
-              nct_id: ["NCT12345678"],
-            },
-          ],
-          brief_title: ["title"],
-          sponsors: [
-            {
-              lead_sponsor: [
-                {
-                  agency: ["Example Agency"],
-                },
-              ],
-            },
-          ],
-          source: ["http://www.example.com/source"],
-          overall_status: ["Recruiting"],
-          study_type: ["Observational"],
-        });
+        return Promise.resolve(createEmptyClinicalStudy());
       });
       matcher = createClinicalTrialLookup(
         { api_endpoint: endpoint },
@@ -145,7 +72,7 @@ describe(".createClinicalTrialLookup", () => {
     });
 
     it("fills in missing data", () => {
-      interceptor.reply(200, [createExampleTrial()]);
+      interceptor.reply(200, [createExampleTrialResponse()]);
       return expectAsync(
         matcher(createEmptyBundle()).then((result) => {
           const study = result.entry[0].resource;
@@ -327,7 +254,7 @@ describe(".sendQuery", () => {
   });
 
   it("returns trial responses from the server", () => {
-    const exampleTrial = createExampleTrial();
+    const exampleTrial = createExampleTrialResponse();
     interceptor.reply(200, [exampleTrial]);
     return expectAsync(
       sendQuery(endpoint, "ignored").then((result) => {
