@@ -2,11 +2,9 @@ import { fhir, ResearchStudy, ClinicalStudy, updateResearchStudyWithClinicalStud
 import { TrialResponse } from './breastcancertrials';
 
 /*
-This file contains a basic implementation of a FHIR ResearchStudy resource and supporting interfaces
-The class can be expanded meeting the specifications outlined at https://www.hl7.org/fhir/researchstudy.html
-Should your matching service not provide a necessary attribute, use trialbackup.ts fill it in, if there is nothing to
-pull in from the backup, leave the attribute out of your FHIR ResearchStudy entirely
-*/
+ * This module handles mapping the responses from the breastcancertrials.org
+ * service to FHIR ResearchStudy objects.
+ */
 
 export const phaseCodeMap = new Map<string, string>([
   // this is guesswork
