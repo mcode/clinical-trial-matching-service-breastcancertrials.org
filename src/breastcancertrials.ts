@@ -4,6 +4,7 @@ import csv from "csv-parser";
 
 export const rxnormSnomedMapping = new Map<string, string>();
 export const stageSnomedMapping = new Map<string, string>();
+export const ajccStageSnomedMapping = new Map<string, string>();
 
 /*
  * Imports the mapping CSV at the given file path into the given variable.
@@ -18,11 +19,13 @@ export function importCodeMappingFile(filePath: string, mapping: Map<string, str
       .pipe(csv())
       .on(
         "data",
-        (data: { rxnorm: string; snomed: string; qualifiervaluesnomed: string; clinicalfindingsnomed: string }) => {
+        (data: { rxnorm: string; snomed: string; qualifiervaluesnomed: string; clinicalfindingsnomed: string, ajcc: string }) => {
           if (data.rxnorm != undefined) {
             mapping.set(data.rxnorm, data.snomed);
           } else if (data.qualifiervaluesnomed != undefined) {
             mapping.set(data.qualifiervaluesnomed, data.clinicalfindingsnomed);
+          } else if (data.ajcc != undefined) {
+            mapping.set(data.ajcc, data.snomed);
           } else {
             reject(new Error("Invalid input mapping file."));
             return;
@@ -44,6 +47,11 @@ export function importRxnormSnomedMapping(): Promise<Map<string, string>> {
 // Imports Stage SNOMED Code Mapping from Qualifer Value Stage Codes and Clincal Finding Stage Codes.
 export function importStageSnomedMapping(): Promise<Map<string, string>> {
   return importCodeMappingFile("./data/stage-snomed-mapping.csv", stageSnomedMapping);
+}
+
+// Imports Stage SNOMED Code Mapping from Qualifer Value Stage Codes and Clincal Finding Stage Codes.
+export function importStageAjccMapping(): Promise<Map<string, string>> {
+  return importCodeMappingFile("./data/ajcc-stage-snomed-mapping.csv", ajccStageSnomedMapping);
 }
 
 export interface TrialResponse {
