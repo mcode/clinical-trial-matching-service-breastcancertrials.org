@@ -120,8 +120,12 @@ export function performCodeMapping(
       // Cast to a Stage[] to access the stage's coding attributes.
       const staging = entry.resource["stage"] as Stage[];
       for (const stage of staging) {
-        mapCoding(stage.summary, mapping);
-        mapCoding(stage.type, mapping);
+        if (stage.summary != undefined) {
+          mapCoding(stage.summary, mapping);
+        }
+        if (stage.type != undefined) {
+          mapCoding(stage.type, mapping);
+        }
       }
     }
   }
