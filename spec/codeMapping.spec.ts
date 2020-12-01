@@ -6,11 +6,8 @@ import {
   importRxnormSnomedMapping,
   Coding,
   Stage,
-  rxnormSnomedMapping,
-  stageSnomedMapping,
   importStageSnomedMapping,
   importStageAjccMapping,
-  ajccStageSnomedMapping
 } from "../src/breastcancertrials";
 
 describe("Code Mapping Tests.", () => {

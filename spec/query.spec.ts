@@ -15,9 +15,6 @@ import {
   importRxnormSnomedMapping,
   importStageSnomedMapping,
   importStageAjccMapping,
-  rxnormSnomedMapping,
-  stageSnomedMapping,
-  ajccStageSnomedMapping
 } from "../src/breastcancertrials";
 import { isResearchStudy } from "clinical-trial-matching-service/dist/fhir-types";
 import { createExampleTrialResponse, createEmptyBundle, createEmptyClinicalStudy } from "./support/factory";
@@ -96,7 +93,6 @@ describe(".createClinicalTrialLookup", () => {
 });
 
 describe(".performCodeMapping", () => {
-  let mappings: Map<string, string>;
   beforeEach(() => {
     importRxnormSnomedMapping().catch(
       () => "Loaded RxNorm-SNOMED Mapping for Tests."
@@ -107,13 +103,6 @@ describe(".performCodeMapping", () => {
     importStageAjccMapping().catch(
       () => "Loaded Staging AJCC to SNOMED Mapping for Tests."
     );
-    /*
-    // Rather than load the "real" mappings just do some fake ones for the test
-    mappings = new Map<string, string>([
-      ["AAA", "111"],
-      ["BBB", "222"],
-    ]);
-    */
   });
   it("ignores invalid entries", () => {
     const bundle: fhir.Bundle = {
@@ -184,7 +173,7 @@ describe(".performCodeMapping", () => {
     bundle.entry[0].resource[
       "medicationCodeableConcept"
     ] = medicationCodableConcept;
-    let result = performCodeMapping(bundle);
+    const result = performCodeMapping(bundle);
     expect(result.entry.length).toEqual(2);
     let resource: fhir.Resource = result.entry[0].resource;
     expect(resource).toBeDefined();
@@ -220,34 +209,6 @@ describe(".performCodeMapping", () => {
         ],
       },
     }]);
-    // Repeat for conditions
-    /*
-    result = performCodeMapping(bundle);
-    resource = result.entry[1].resource;
-    expect(resource.resourceType).toEqual('Condition');
-    expect(resource['stage']).toEqual([{
-      summary: {
-        coding: [
-          {
-            system: "http://snomed.info/sct",
-            code: "222",
-          },
-          {
-            system: "unused",
-            code: "CCC",
-          },
-        ],
-      },
-      type: {
-        coding: [
-          {
-            system: "unused",
-            code: "XXX",
-          },
-        ],
-      }
-    }]);
-    */
   });
 });
 
