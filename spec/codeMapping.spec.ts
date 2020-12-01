@@ -9,6 +9,8 @@ import {
   rxnormSnomedMapping,
   stageSnomedMapping,
   importStageSnomedMapping,
+  importStageAjccMapping,
+  ajccStageSnomedMapping
 } from "../src/breastcancertrials";
 
 describe("Code Mapping Tests.", () => {
@@ -20,6 +22,9 @@ describe("Code Mapping Tests.", () => {
     );
     importStageSnomedMapping().catch(
       () => "Loaded Staging SNOMED Mapping for Tests."
+    );
+    importStageAjccMapping().catch(
+      () => "Loaded Staging AJCC to SNOMED Mapping for Tests."
     );
     return new Promise((resolve, reject) => {
       const patientDataPath = path.join(
@@ -45,13 +50,9 @@ describe("Code Mapping Tests.", () => {
 
   it("Test Coding Mappings.", function () {
     // Map the RxNorm-SNOMED codes in the patient bundle.
-    performCodeMapping(
-      testPatientBundle,
-      "MedicationStatement",
-      rxnormSnomedMapping
-    );
+    performCodeMapping(testPatientBundle);
     // Map the Staging SNOMED codes in the patient bundle.
-    performCodeMapping(testPatientBundle, "Condition", stageSnomedMapping);
+    //performCodeMapping(testPatientBundle);
 
     // Test that RxNorm code 904425 gets mapped to SNOMED 96290008 (located in entry[1] in patient_data)
     expect(

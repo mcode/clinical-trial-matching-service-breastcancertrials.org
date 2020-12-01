@@ -57,20 +57,6 @@ export function createClinicalTrialLookup(
     patientBundle: Bundle
   ): Promise<SearchSet> {
     patientBundle = performCodeMapping(patientBundle);
-     /*
-    // Map the RxNorm-SNOMED Codes.
-    patientBundle = performCodeMapping(
-      patientBundle,
-      "MedicationStatement",
-      rxnormSnomedMapping
-    );
-    // Map the Staging SNOMED Codes.
-    patientBundle = performCodeMapping(
-      patientBundle,
-      "Condition",
-      stageSnomedMapping
-    );
-    */
     // For now, the full patient bundle is the query
     return sendQuery(endpoint, JSON.stringify(patientBundle)).then((result) => {
       // Convert the result to a SearchSet
@@ -141,21 +127,24 @@ function mapCoding(coding: Coding) {
   for (const currentCoding of coding.coding) {
     const origSystem: string = coding.coding[count].system;
     // set mapping
-    var mapping = new Map<string, string>();
-    if (origSystem.includes("rxnorm")) {
-      mapping = rxnormSnomedMapping;
-    } else if (origSystem.includes("snomed")) {
-      mapping = stageSnomedMapping;
-    } else if (origSystem.includes("ajcc") || origSystem.includes("cancerstaging.org")) {
-      mapping = ajccStageSnomedMapping;
-    } else {
-      console.log("No Code Mapping Found");
+    let mapping = new Map<string, string>();
+    if (origSystem != undefined) {
+      if (origSystem.includes("rxnorm")) {
+        mapping = rxnormSnomedMapping;
+      } else if (origSystem.includes("snomed")) {
+        mapping = stageSnomedMapping;
+      } else if (origSystem.includes("ajcc") || origSystem.includes("cancerstaging.org")) {
+        mapping = ajccStageSnomedMapping;
+      }
     }
     const potentialNewCode: string = mapping.get(currentCoding.code);
     if (potentialNewCode != undefined) {
       // Code exists in the given mapping; update it.
       coding.coding[count].code = potentialNewCode;
       coding.coding[count].system = "http://snomed.info/sct";
+      if (coding.coding[count].display != undefined) {
+        coding.coding[count].display = undefined;
+      }
     }
     count++;
   }
