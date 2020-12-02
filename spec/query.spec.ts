@@ -12,7 +12,7 @@ import {
 import nock from "nock";
 import { Coding } from "../src/breastcancertrials";
 import { isResearchStudy } from "clinical-trial-matching-service/dist/fhir-types";
-import { createExampleTrialResponse, createEmptyBundle, createEmptyClinicalStudy } from "./support/factory";
+import { createExampleTrialResponse, createEmptyBundle } from "./support/factory";
 
 describe(".createClinicalTrialLookup", () => {
   it("raises an error if missing an endpoint", () => {
@@ -41,11 +41,8 @@ describe(".createClinicalTrialLookup", () => {
       // Note: backupService is never initialized therefore it won't actually work
       backupService = new ClinicalTrialGovService("temp");
       // Don't actually download anything
-      spyOn(backupService, "downloadTrials").and.callFake(() => {
-        return Promise.resolve();
-      });
-      spyOn(backupService, "getDownloadedTrial").and.callFake(() => {
-        return Promise.resolve(createEmptyClinicalStudy());
+      spyOn(backupService, "updateResearchStudies").and.callFake((studies) => {
+        return Promise.resolve(studies);
       });
       matcher = createClinicalTrialLookup(
         { api_endpoint: endpoint },

@@ -1,4 +1,5 @@
 import { convertToResearchStudy } from '../src/research-study';
+import { updateResearchStudy } from '../src/query';
 import { TrialResponse } from "../src/breastcancertrials";
 
 import * as fs from 'fs';
@@ -22,7 +23,8 @@ describe('FHIR Validation', () => {
     const json: TrialResponse = JSON.parse(data) as TrialResponse;
     const clinicalStudyXML = await readFile(specPath('data/NCT03377387.xml'), { encoding: 'utf8' });
     const clinicalStudy = await parseClinicalTrialXML(clinicalStudyXML);
-    const study = convertToResearchStudy(json, clinicalStudy);
+    const study = convertToResearchStudy(json);
+    updateResearchStudy(study, clinicalStudy);
     const result = fhir.validate(study);
     if (result.messages && result.messages.length > 0) {
       console.error('Validation has messages:');

@@ -1,4 +1,4 @@
-import { fhir, ResearchStudy, ClinicalStudy, updateResearchStudyWithClinicalStudy } from 'clinical-trial-matching-service';
+import { fhir, ResearchStudy } from 'clinical-trial-matching-service';
 import { TrialResponse } from './breastcancertrials';
 
 /*
@@ -40,7 +40,7 @@ function convertArrayToCodeableConcept(trialConditions: string[]): fhir.Codeable
   return fhirConditions;
 }
 
-export function convertToResearchStudy(trial: Partial<TrialResponse> & { trialId: string }, clinicalStudy: ClinicalStudy): ResearchStudy {
+export function convertToResearchStudy(trial: Partial<TrialResponse> & { trialId: string }): ResearchStudy {
   // The clinical trial ID is required as it's used to look up the search study
   const result = new ResearchStudy(trial.trialId);
   if (trial.trialTitle) {
@@ -71,10 +71,6 @@ export function convertToResearchStudy(trial: Partial<TrialResponse> & { trialId
     // If there is a purpose and whoIsThisFor, use that, otherwise leave the
     // description blank and allow the default CTs.gov service fill it in
     result.description = `Purpose: ${trial.purpose}\n\n Targets: ${trial.whoIsThisFor}`;
-    const briefSummary = clinicalStudy.brief_summary;
-    if (briefSummary) {
-      result.description += '\n\n' + briefSummary[0].textblock[0];
-    }
   }
   if (trial.purpose) {
     result.objective = [{ name: trial.purpose }];
@@ -82,8 +78,6 @@ export function convertToResearchStudy(trial: Partial<TrialResponse> & { trialId
   if (trial.siteName) {
     result.sponsor = result.addContainedResource({ resourceType: 'Organization', id: 'org' + result.id, name: trial.siteName });
   }
-  // Now that we've filled out what we can, let the backup service fill everything else out
-  updateResearchStudyWithClinicalStudy(result, clinicalStudy);
   return result;
 }
 
