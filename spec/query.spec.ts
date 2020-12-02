@@ -1,18 +1,9 @@
-import {
-  ClinicalTrialGovService,
-  ClinicalTrialMatcher,
-  fhir,
-} from "clinical-trial-matching-service";
-import {
-  APIError,
-  createClinicalTrialLookup,
-  performCodeMapping,
-  sendQuery,
-} from "../src/query";
+import { ClinicalTrialGovService, ClinicalTrialMatcher, fhir } from "clinical-trial-matching-service";
+import { APIError, createClinicalTrialLookup, performCodeMapping, sendQuery, updateResearchStudy } from "../src/query";
 import nock from "nock";
 import { Coding } from "../src/breastcancertrials";
 import { isResearchStudy } from "clinical-trial-matching-service/dist/fhir-types";
-import { createExampleTrialResponse, createEmptyBundle } from "./support/factory";
+import { createExampleTrialResponse, createEmptyClinicalStudy, createEmptyBundle } from "./support/factory";
 
 describe(".createClinicalTrialLookup", () => {
   it("raises an error if missing an endpoint", () => {
@@ -24,10 +15,7 @@ describe(".createClinicalTrialLookup", () => {
 
   it("creates a function", () => {
     expect(
-      typeof createClinicalTrialLookup(
-        { api_endpoint: "http://www.example.com/" },
-        new ClinicalTrialGovService("temp")
-      )
+      typeof createClinicalTrialLookup({ api_endpoint: "http://www.example.com/" }, new ClinicalTrialGovService("temp"))
     ).toEqual("function");
   });
 
@@ -44,10 +32,7 @@ describe(".createClinicalTrialLookup", () => {
       spyOn(backupService, "updateResearchStudies").and.callFake((studies) => {
         return Promise.resolve(studies);
       });
-      matcher = createClinicalTrialLookup(
-        { api_endpoint: endpoint },
-        backupService
-      );
+      matcher = createClinicalTrialLookup({ api_endpoint: endpoint }, backupService);
       scope = nock("http://www.example.com");
       interceptor = scope.post("/endpoint");
     });
@@ -74,9 +59,9 @@ describe(".createClinicalTrialLookup", () => {
         matcher(createEmptyBundle()).then((result) => {
           const study = result.entry[0].resource;
           if (isResearchStudy(study)) {
-            expect(study.title).toEqual('Title');
+            expect(study.title).toEqual("Title");
           } else {
-            fail('Expected research study');
+            fail("Expected research study");
           }
         })
       ).toBeResolved();
@@ -90,7 +75,7 @@ describe(".performCodeMapping", () => {
     // Rather than load the "real" mappings just do some fake ones for the test
     mappings = new Map<string, string>([
       ["AAA", "111"],
-      ["BBB", "222"],
+      ["BBB", "222"]
     ]);
   });
 
@@ -98,7 +83,7 @@ describe(".performCodeMapping", () => {
     const bundle: fhir.Bundle = {
       resourceType: "Bundle",
       type: "collection",
-      entry: [],
+      entry: []
     };
     // This involves lying to TypeScript as it ensures we only add valid objects
     bundle.entry.push(({ foo: "bar" } as unknown) as fhir.BundleEntry);
@@ -115,53 +100,53 @@ describe(".performCodeMapping", () => {
           coding: [
             {
               system: "",
-              code: "AAA",
-            },
-          ],
-        },
-      },
+              code: "AAA"
+            }
+          ]
+        }
+      }
     });
     bundle.entry.push({
       resource: {
         resourceType: "Condition",
         code: {
-          coding: [],
+          coding: []
         },
-        stage: [{
-          summary: {
-            coding: [
-              {
-                system: "unused",
-                code: "BBB",
-              },
-              {
-                system: "unused",
-                code: "CCC",
-              },
-            ],
-          },
-          type: {
-            coding: [
-              {
-                system: "unused",
-                code: "XXX",
-              },
-            ],
-          },
-        }],
-      },
+        stage: [
+          {
+            summary: {
+              coding: [
+                {
+                  system: "unused",
+                  code: "BBB"
+                },
+                {
+                  system: "unused",
+                  code: "CCC"
+                }
+              ]
+            },
+            type: {
+              coding: [
+                {
+                  system: "unused",
+                  code: "XXX"
+                }
+              ]
+            }
+          }
+        ]
+      }
     } as fhir.BundleEntry);
     const medicationCodableConcept: Coding = {
       coding: [
         {
-          code: "AAA",
-        },
+          code: "AAA"
+        }
       ],
-      text: "Example",
+      text: "Example"
     };
-    bundle.entry[0].resource[
-      "medicationCodeableConcept"
-    ] = medicationCodableConcept;
+    bundle.entry[0].resource["medicationCodeableConcept"] = medicationCodableConcept;
     let result = performCodeMapping(bundle, "MedicationStatement", mappings);
     expect(result.entry.length).toEqual(2);
     let resource: fhir.Resource = result.entry[0].resource;
@@ -170,60 +155,76 @@ describe(".performCodeMapping", () => {
     const concept = resource["medicationCodeableConcept"] as Coding;
     expect(concept).toBeDefined();
     expect(concept.text).toEqual("Example");
-    expect(concept.coding).toEqual([
-      { system: "http://snomed.info/sct", code: "111" },
-    ]);
+    expect(concept.coding).toEqual([{ system: "http://snomed.info/sct", code: "111" }]);
     resource = result.entry[1].resource;
     expect(resource).toBeDefined();
     // At present, the condition resource should be unchanged
-    expect(resource['stage']).toEqual([{
-      summary: {
-        coding: [
-          {
-            system: "unused",
-            code: "BBB",
-          },
-          {
-            system: "unused",
-            code: "CCC",
-          },
-        ],
-      },
-      type: {
-        coding: [
-          {
-            system: "unused",
-            code: "XXX",
-          },
-        ],
-      },
-    }]);
+    expect(resource["stage"]).toEqual([
+      {
+        summary: {
+          coding: [
+            {
+              system: "unused",
+              code: "BBB"
+            },
+            {
+              system: "unused",
+              code: "CCC"
+            }
+          ]
+        },
+        type: {
+          coding: [
+            {
+              system: "unused",
+              code: "XXX"
+            }
+          ]
+        }
+      }
+    ]);
     // Repeat for conditions
     result = performCodeMapping(bundle, "Condition", mappings);
     resource = result.entry[1].resource;
-    expect(resource.resourceType).toEqual('Condition');
-    expect(resource['stage']).toEqual([{
-      summary: {
-        coding: [
-          {
-            system: "http://snomed.info/sct",
-            code: "222",
-          },
-          {
-            system: "unused",
-            code: "CCC",
-          },
-        ],
-      },
-      type: {
-        coding: [
-          {
-            system: "unused",
-            code: "XXX",
-          },
-        ],
+    expect(resource.resourceType).toEqual("Condition");
+    expect(resource["stage"]).toEqual([
+      {
+        summary: {
+          coding: [
+            {
+              system: "http://snomed.info/sct",
+              code: "222"
+            },
+            {
+              system: "unused",
+              code: "CCC"
+            }
+          ]
+        },
+        type: {
+          coding: [
+            {
+              system: "unused",
+              code: "XXX"
+            }
+          ]
+        }
       }
-    }]);
+    ]);
+  });
+});
+
+describe("updateResearchStudy()", () => {
+  it("does not update the description if none exists", () => {
+    const researchStudy: fhir.ResearchStudy = { resourceType: "ResearchStudy" };
+    updateResearchStudy(researchStudy, createEmptyClinicalStudy({ briefSummary: "ignore me" }));
+    expect(researchStudy.description).not.toBeDefined();
+  });
+
+  it("does not update the description if there is no brief summary", () => {
+    const researchStudy: fhir.ResearchStudy = { resourceType: "ResearchStudy", description: "Do not change this" };
+    updateResearchStudy(researchStudy, createEmptyClinicalStudy());
+    expect(researchStudy.description).toEqual("Do not change this");
   });
 });
 
@@ -240,9 +241,7 @@ describe(".sendQuery", () => {
   });
 
   it("sets the content-type header", () => {
-    interceptor
-      .matchHeader("Content-type", "application/fhir+json")
-      .reply(200, []);
+    interceptor.matchHeader("Content-type", "application/fhir+json").reply(200, []);
     return expectAsync(
       sendQuery(endpoint, "ignored").then(() => {
         expect(scope.isDone()).toBeTrue();
@@ -262,29 +261,21 @@ describe(".sendQuery", () => {
 
   it("rejects the Promise if the response isn't JSON", () => {
     interceptor.reply(200, "Not JSON");
-    return expectAsync(sendQuery(endpoint, "ignored")).toBeRejectedWithError(
-      APIError
-    );
+    return expectAsync(sendQuery(endpoint, "ignored")).toBeRejectedWithError(APIError);
   });
 
   it("rejects the Promise if the response isn't the expected JSON", () => {
     interceptor.reply(200, "null");
-    return expectAsync(sendQuery(endpoint, "ignored")).toBeRejectedWithError(
-      APIError
-    );
+    return expectAsync(sendQuery(endpoint, "ignored")).toBeRejectedWithError(APIError);
   });
 
   it("rejects the Promise if server returns an error response", () => {
     interceptor.reply(500, "This is an error.");
-    return expectAsync(sendQuery(endpoint, "ignored")).toBeRejectedWithError(
-      APIError
-    );
+    return expectAsync(sendQuery(endpoint, "ignored")).toBeRejectedWithError(APIError);
   });
 
   it("rejects the Promise if the connection fails", () => {
     interceptor.replyWithError("Oops");
-    return expectAsync(sendQuery(endpoint, "ignored")).toBeRejectedWithError(
-      "Oops"
-    );
+    return expectAsync(sendQuery(endpoint, "ignored")).toBeRejectedWithError("Oops");
   });
 });
