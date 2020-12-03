@@ -145,7 +145,7 @@ describe(".performCodeMapping", () => {
                 code: "583218",
               },
               {
-                system: "unused",
+                system: undefined,
                 code: "CCC",
               },
             ],
@@ -198,7 +198,7 @@ describe(".performCodeMapping", () => {
             code: "426653008",
           },
           {
-            system: "unused",
+            system: undefined,
             code: "CCC",
           },
         ],

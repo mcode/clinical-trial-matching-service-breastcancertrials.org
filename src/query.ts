@@ -125,7 +125,7 @@ function mapCoding(coding: Coding) {
   // Check all the codes for conversion based on the given mapping.
   let count = 0;
   for (const currentCoding of coding.coding) {
-    const origSystem: string = coding.coding[count].system;
+    const origSystem: string = currentCoding.system;
     // set mapping
     let mapping = new Map<string, string>();
     if (origSystem != undefined) {
