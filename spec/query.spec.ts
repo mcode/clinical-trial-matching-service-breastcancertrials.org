@@ -10,7 +10,12 @@ import {
   sendQuery,
 } from "../src/query";
 import nock from "nock";
-import { Coding } from "../src/breastcancertrials";
+import {
+  Coding,
+  importRxnormSnomedMapping,
+  importStageSnomedMapping,
+  importStageAjccMapping,
+} from "../src/breastcancertrials";
 import { isResearchStudy } from "clinical-trial-matching-service/dist/fhir-types";
 import { createExampleTrialResponse, createEmptyBundle, createEmptyClinicalStudy } from "./support/factory";
 
@@ -88,15 +93,17 @@ describe(".createClinicalTrialLookup", () => {
 });
 
 describe(".performCodeMapping", () => {
-  let mappings: Map<string, string>;
   beforeEach(() => {
-    // Rather than load the "real" mappings just do some fake ones for the test
-    mappings = new Map<string, string>([
-      ["AAA", "111"],
-      ["BBB", "222"],
-    ]);
+    importRxnormSnomedMapping().catch(
+      () => "Loaded RxNorm-SNOMED Mapping for Tests."
+    );
+    importStageSnomedMapping().catch(
+      () => "Loaded Staging SNOMED Mapping for Tests."
+    );
+    importStageAjccMapping().catch(
+      () => "Loaded Staging AJCC to SNOMED Mapping for Tests."
+    );
   });
-
   it("ignores invalid entries", () => {
     const bundle: fhir.Bundle = {
       resourceType: "Bundle",
@@ -105,24 +112,24 @@ describe(".performCodeMapping", () => {
     };
     // This involves lying to TypeScript as it ensures we only add valid objects
     bundle.entry.push(({ foo: "bar" } as unknown) as fhir.BundleEntry);
-    performCodeMapping(bundle, "MedicationStatement", mappings);
+    performCodeMapping(bundle);
     // This test succeeds if it doesn't blow up
   });
 
   it("maps properly", () => {
     const bundle: fhir.Bundle = createEmptyBundle();
     bundle.entry.push({
-      resource: {
-        resourceType: "MedicationStatement",
-        code: {
-          coding: [
-            {
-              system: "",
-              code: "AAA",
-            },
-          ],
-        },
-      },
+              resource: {
+                resourceType: "MedicationStatement",
+                code: {
+                  coding: [
+                    {
+                      system: undefined,
+                      code: "4",
+                    },
+                  ],
+                },
+              },
     });
     bundle.entry.push({
       resource: {
@@ -134,11 +141,11 @@ describe(".performCodeMapping", () => {
           summary: {
             coding: [
               {
-                system: "unused",
-                code: "BBB",
+                system: "http://www.nlm.nih.gov/research/umls/rxnorm",
+                code: "583218",
               },
               {
-                system: "unused",
+                system: undefined,
                 code: "CCC",
               },
             ],
@@ -157,7 +164,8 @@ describe(".performCodeMapping", () => {
     const medicationCodableConcept: Coding = {
       coding: [
         {
-          code: "AAA",
+          system: "http://cancerstaging.org",
+          code: "4",
         },
       ],
       text: "Example",
@@ -165,16 +173,19 @@ describe(".performCodeMapping", () => {
     bundle.entry[0].resource[
       "medicationCodeableConcept"
     ] = medicationCodableConcept;
-    let result = performCodeMapping(bundle, "MedicationStatement", mappings);
+    const result = performCodeMapping(bundle);
     expect(result.entry.length).toEqual(2);
     let resource: fhir.Resource = result.entry[0].resource;
     expect(resource).toBeDefined();
     expect(resource.resourceType).toEqual("MedicationStatement");
+    expect(resource["code"]).toEqual({ coding: [
+          { system: undefined, code: "4" },
+        ]});
     const concept = resource["medicationCodeableConcept"] as Coding;
     expect(concept).toBeDefined();
     expect(concept.text).toEqual("Example");
     expect(concept.coding).toEqual([
-      { system: "http://snomed.info/sct", code: "111" },
+      { system: "http://snomed.info/sct", code: "2640006" },
     ]);
     resource = result.entry[1].resource;
     expect(resource).toBeDefined();
@@ -183,37 +194,11 @@ describe(".performCodeMapping", () => {
       summary: {
         coding: [
           {
-            system: "unused",
-            code: "BBB",
-          },
-          {
-            system: "unused",
-            code: "CCC",
-          },
-        ],
-      },
-      type: {
-        coding: [
-          {
-            system: "unused",
-            code: "XXX",
-          },
-        ],
-      },
-    }]);
-    // Repeat for conditions
-    result = performCodeMapping(bundle, "Condition", mappings);
-    resource = result.entry[1].resource;
-    expect(resource.resourceType).toEqual('Condition');
-    expect(resource['stage']).toEqual([{
-      summary: {
-        coding: [
-          {
             system: "http://snomed.info/sct",
-            code: "222",
+            code: "426653008",
           },
           {
-            system: "unused",
+            system: undefined,
             code: "CCC",
           },
         ],
@@ -225,7 +210,7 @@ describe(".performCodeMapping", () => {
             code: "XXX",
           },
         ],
-      }
+      },
     }]);
   });
 });
