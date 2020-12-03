@@ -49,7 +49,7 @@ export function importStageSnomedMapping(): Promise<Map<string, string>> {
   return importCodeMappingFile("./data/stage-snomed-mapping.csv", stageSnomedMapping);
 }
 
-// Imports Stage SNOMED Code Mapping from Qualifer Value Stage Codes and Clincal Finding Stage Codes.
+// Imports Stage AJCC Code Mapping SNOMED Code Mapping.
 export function importStageAjccMapping(): Promise<Map<string, string>> {
   return importCodeMappingFile("./data/ajcc-stage-snomed-mapping.csv", ajccStageSnomedMapping);
 }
