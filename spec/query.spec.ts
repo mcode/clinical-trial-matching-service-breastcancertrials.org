@@ -119,17 +119,17 @@ describe(".performCodeMapping", () => {
   it("maps properly", () => {
     const bundle: fhir.Bundle = createEmptyBundle();
     bundle.entry.push({
-      resource: {
-        resourceType: "MedicationStatement",
-        code: {
-          coding: [
-            {
-              system: "unused",
-              code: "AAA",
-            },
-          ],
-        },
-      },
+              resource: {
+                resourceType: "MedicationStatement",
+                code: {
+                  coding: [
+                    {
+                      system: undefined,
+                      code: "4",
+                    },
+                  ],
+                },
+              },
     });
     bundle.entry.push({
       resource: {
@@ -178,6 +178,9 @@ describe(".performCodeMapping", () => {
     let resource: fhir.Resource = result.entry[0].resource;
     expect(resource).toBeDefined();
     expect(resource.resourceType).toEqual("MedicationStatement");
+    expect(resource["code"]).toEqual({ coding: [
+          { system: undefined, code: "4" },
+        ]});
     const concept = resource["medicationCodeableConcept"] as Coding;
     expect(concept).toBeDefined();
     expect(concept.text).toEqual("Example");
