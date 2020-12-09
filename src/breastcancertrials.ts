@@ -5,6 +5,8 @@ import csv from "csv-parser";
 export const rxnormSnomedMapping = new Map<string, string>();
 export const stageSnomedMapping = new Map<string, string>();
 export const ajccStageSnomedMapping = new Map<string, string>();
+export const loincBiomarkerMapping = new Map<string, string>();
+export const snomedBiomarkerMapping = new Map<string, string>();
 
 /*
  * Imports the mapping CSV at the given file path into the given variable.
@@ -19,13 +21,17 @@ export function importCodeMappingFile(filePath: string, mapping: Map<string, str
       .pipe(csv())
       .on(
         "data",
-        (data: { rxnorm: string; snomed: string; qualifiervaluesnomed: string; clinicalfindingsnomed: string, ajcc: string }) => {
+        (data: { rxnorm: string; snomed: string; qualifiervaluesnomed: string; clinicalfindingsnomed: string, ajcc: string, loincBiomarker: string, bctLioncBiomarker: string, snomedValue: string, hl7value: string }) => {
           if (data.rxnorm != undefined) {
             mapping.set(data.rxnorm, data.snomed);
           } else if (data.qualifiervaluesnomed != undefined) {
             mapping.set(data.qualifiervaluesnomed, data.clinicalfindingsnomed);
           } else if (data.ajcc != undefined) {
             mapping.set(data.ajcc, data.snomed);
+          } else if (data.loincBiomarker != undefined) {
+            mapping.set(data.loincBiomarker, data.bctLioncBiomarker);
+          } else if (data.snomedValue != undefined) {
+            mapping.set(data.snomedValue, data.hl7value);
           } else {
             reject(new Error("Invalid input mapping file."));
             return;
@@ -52,6 +58,16 @@ export function importStageSnomedMapping(): Promise<Map<string, string>> {
 // Imports Stage AJCC Code Mapping SNOMED Code Mapping.
 export function importStageAjccMapping(): Promise<Map<string, string>> {
   return importCodeMappingFile("./data/ajcc-stage-snomed-mapping.csv", ajccStageSnomedMapping);
+}
+
+// Imports Loinc to Loinc Biomarker Code Mapping.
+export function importLoincBiomarkerMapping(): Promise<Map<string, string>> {
+  return importCodeMappingFile("./data/loinc-to-loinc-biomarker-mapping.csv", loincBiomarkerMapping);
+}
+
+// Imports SNOMED Value to HL7 Value Code Mapping.
+export function importSnomedHl7Mapping(): Promise<Map<string, string>> {
+  return importCodeMappingFile("./data/snomedvalue-to-hl7value-biomarker.csv", snomedBiomarkerMapping);
 }
 
 export interface TrialResponse {
