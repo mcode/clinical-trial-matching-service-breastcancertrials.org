@@ -1,9 +1,9 @@
 import { convertToResearchStudy } from "../src/research-study";
-import { createEmptyClinicalStudy, createExampleTrialResponse } from "./support/factory";
+import { createExampleTrialResponse } from "./support/factory";
 
 describe("convertToResearchStudy()", () => {
   it("handles receiving an empty clinical study", () => {
-    convertToResearchStudy(createExampleTrialResponse(), createEmptyClinicalStudy());
+    convertToResearchStudy(createExampleTrialResponse());
     // Success in this case is not raising an exception
   });
 
@@ -12,16 +12,13 @@ describe("convertToResearchStudy()", () => {
     convertToResearchStudy(
       {
         trialId: "NCT12345678"
-      },
-      createEmptyClinicalStudy()
+      }
     );
   });
 
   it("maps as expected", () => {
     const trialResponse = createExampleTrialResponse();
-    const clinicalStudy = createEmptyClinicalStudy();
-    clinicalStudy.brief_summary = [{ textblock: ["Brief Summary"] }];
-    const researchStudy = convertToResearchStudy(trialResponse, clinicalStudy);
+    const researchStudy = convertToResearchStudy(trialResponse);
     expect(researchStudy.title).toEqual("Title");
     expect(researchStudy.identifier).toEqual([
       {
@@ -54,7 +51,7 @@ describe("convertToResearchStudy()", () => {
       }
     ]);
     expect(researchStudy.location).toEqual([{ text: "United States" }]);
-    expect(researchStudy.description).toEqual("Purpose: Purpose.\n\n Targets: Who is this for?\n\nBrief Summary");
+    expect(researchStudy.description).toEqual("Purpose: Purpose.\n\n Targets: Who is this for?");
     expect(researchStudy.objective).toEqual([{ name: "Purpose." }]);
     if (researchStudy.sponsor) {
       expect(researchStudy.sponsor.reference).toBeDefined();

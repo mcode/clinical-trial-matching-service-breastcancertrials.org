@@ -9,7 +9,7 @@ export function createEmptyBundle(): fhir.Bundle {
   return {
     resourceType: "Bundle",
     type: "collection",
-    entry: [],
+    entry: []
   };
 }
 
@@ -17,47 +17,55 @@ export function createEmptyBundle(): fhir.Bundle {
  * Creates the minimum set of items needed for a clinical study. Options can be
  * set to override defaults otherwise used for required fields.
  */
-export function createEmptyClinicalStudy(options: {
-  id?: string;
-  source?: string;
-  briefTitle?: string;
-  sponsorAgency?: string;
-  overallStatus?: StatusEnum;
-  studyType?: StudyTypeEnum;
-} = {}): ClinicalStudy {
+export function createEmptyClinicalStudy(
+  options: {
+    id?: string;
+    source?: string;
+    briefTitle?: string;
+    sponsorAgency?: string;
+    overallStatus?: StatusEnum;
+    studyType?: StudyTypeEnum;
+    briefSummary?: string;
+  } = {}
+): ClinicalStudy {
   const id = options.id ?? "NCT12345678",
     source = options.source ?? "http://www.example.com/source",
     briefTitle = options.briefTitle ?? "Title",
     sponsorAgency = options.sponsorAgency ?? "Example Agency",
     overallStatus = options.overallStatus ?? "Recruiting",
-    studyType = options.studyType ?? "Observational";
-  return {
+    studyType = options.studyType ?? "Observational",
+    briefSummary = options.briefTitle;
+  const result: ClinicalStudy = {
     required_header: [
       {
         download_date: [""],
         link_text: [""],
-        url: [""],
-      },
+        url: [""]
+      }
     ],
     id_info: [
       {
-        nct_id: [id],
-      },
+        nct_id: [id]
+      }
     ],
     brief_title: [briefTitle],
     sponsors: [
       {
         lead_sponsor: [
           {
-            agency: [sponsorAgency],
-          },
-        ],
-      },
+            agency: [sponsorAgency]
+          }
+        ]
+      }
     ],
     source: [source],
     overall_status: [overallStatus],
-    study_type: [studyType],
+    study_type: [studyType]
   };
+  if (briefSummary) {
+    result.brief_summary = [{ textblock: [briefSummary] }];
+  }
+  return result;
 }
 
 /**
@@ -76,8 +84,7 @@ export function createExampleTrialResponse(): TrialResponse {
     whatIsBeingStudied: "What is being studied?",
     learnMore: "Learn more",
     ctGovLink: "https://clinicaltrials.gov/ct2/show/NCT03377387",
-    eligibilityCriteriaLink:
-      "https://clinicaltrials.gov/ct2/show/NCT03377387#eligibility",
+    eligibilityCriteriaLink: "https://clinicaltrials.gov/ct2/show/NCT03377387#eligibility",
     trialCategories: ["METASTATIC", "TREATMENT_BIOLOGICAL"],
     trialMutations: [],
     newTrialFlag: false,
@@ -93,6 +100,6 @@ export function createExampleTrialResponse(): TrialResponse {
     contactPhone: "781-555-0100",
     contactEmail: null,
     noVisitsRequiredFlag: false,
-    numberOfSites: "1",
+    numberOfSites: "1"
   };
 }
