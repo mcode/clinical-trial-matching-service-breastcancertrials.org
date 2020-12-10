@@ -7,14 +7,13 @@ describe('BreastCancerTrialsService', () => {
   describe('when listening', () => {
     let service: BreastCancerTrialsService;
     let server: http.Server;
-    beforeAll(() => {
+    beforeAll(async () => {
       service = new BreastCancerTrialsService({ api_endpoint: 'http://localhost/', port: 0 });
-      return service.init().then(() => {
-        server = service.listen();
-      });
+      await service.init();
+      server = await service.listen();
     });
-    afterAll(() => {
-      service.close();
+    afterAll(async () => {
+      await service.close();
     });
 
     it('responds to /', () => {
