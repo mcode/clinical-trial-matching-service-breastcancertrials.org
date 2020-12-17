@@ -74,11 +74,14 @@ describe(".createClinicalTrialLookup", () => {
   });
 });
 
-describe(".performCodeMapping", () => {
-  beforeEach(() => {
-    importRxnormSnomedMapping().catch(() => "Loaded RxNorm-SNOMED Mapping for Tests.");
-    importStageSnomedMapping().catch(() => "Loaded Staging SNOMED Mapping for Tests.");
-    importStageAjccMapping().catch(() => "Loaded Staging AJCC to SNOMED Mapping for Tests.");
+describe("performCodeMapping()", () => {
+  beforeAll(() => {
+    // Load all of the mappings "at once"
+    return Promise.all([
+      importRxnormSnomedMapping(),
+      importStageSnomedMapping(),
+      importStageAjccMapping()
+    ]);
   });
   it("ignores invalid entries", () => {
     const bundle: fhir.Bundle = {
