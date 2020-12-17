@@ -75,7 +75,7 @@ describe(".createClinicalTrialLookup", () => {
 });
 
 describe("performCodeMapping()", () => {
-  beforeEach(() => {
+  beforeAll(() => {
     // Load all of the mappings "at once"
     return Promise.all([
       importRxnormSnomedMapping(),
