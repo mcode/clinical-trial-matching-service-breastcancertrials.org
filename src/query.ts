@@ -110,7 +110,7 @@ export function performCodeMapping(
       ] as Coding;
       mapCoding(medicationCodableConcept, "MedicationStatement");
     }
-    // If the current resource is an Observation (and is a tumorMarker? - should i check profile)
+    // If the current resource is an Observation
     if (
       entry.resource.resourceType == "Observation"
     ) {
@@ -159,6 +159,7 @@ function mapCoding(coding: Coding, resourceType: string) {
         mapping = rxnormSnomedMapping;
       } else if (origSystem.includes("loinc")) {
         mapping = loincBiomarkerMapping;
+        resultSystem = origSystem;
       } else if (origSystem.includes("snomed") && resourceType == "Observation") {
         mapping = snomedBiomarkerMapping;
         resultSystem = "http://hl7.org/fhir/v2/0078/";
