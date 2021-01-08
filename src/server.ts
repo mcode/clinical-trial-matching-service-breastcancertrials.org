@@ -51,11 +51,3 @@ export default function start(): Promise<ClinicalTrialMatchingService> {
     return service.listen().then(() => service);
   });
 }
-
-/* istanbul ignore next: can't exactly load this directly via test case */
-if (require.main === module) {
-  start().catch((error) => {
-    console.error("Could not start service:");
-    console.error(error);
-  });
-}
