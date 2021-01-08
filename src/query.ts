@@ -17,7 +17,9 @@ import {
   rxnormSnomedMapping,
   stageSnomedMapping,
   ajccStageSnomedMapping,
-  TrialResponse,
+  loincBiomarkerMapping,
+  snomedBiomarkerMapping,
+  TrialResponse
 } from "./breastcancertrials";
 import { convertToResearchStudy } from "./research-study";
 
@@ -80,7 +82,7 @@ export function createClinicalTrialLookup(
   ): Promise<SearchSet> {
     patientBundle = performCodeMapping(patientBundle);
     // For now, the full patient bundle is the query
-    return sendQuery(endpoint, JSON.stringify(patientBundle)).then((result) => {
+    return sendQuery(endpoint, JSON.stringify(patientBundle, null, 2)).then((result) => {
       return backupService.updateResearchStudies(result.map(convertToResearchStudy)).then((studies) => new SearchSet(studies));
     });
   };
@@ -98,7 +100,7 @@ export function performCodeMapping(
       continue;
     }
 
-    // If the current resource is of the given ResourceType and is a Medication Statement...
+    // If the current resource is a Medication Statement...
     if (
       entry.resource.resourceType == "MedicationStatement"
     ) {
@@ -106,9 +108,22 @@ export function performCodeMapping(
       const medicationCodableConcept = entry.resource[
         "medicationCodeableConcept"
       ] as Coding;
-      mapCoding(medicationCodableConcept);
+      mapCoding(medicationCodableConcept, "MedicationStatement");
     }
-    // If the current resource is of the given ResourceType and is a Staging Code...
+    // If the current resource is an Observation
+    if (
+      entry.resource.resourceType == "Observation"
+    ) {
+      const code = entry.resource[
+        "code"
+      ] as Coding;
+      mapCoding(code, "Observation");
+      const valueCodableConcept = entry.resource[
+        "valueCodeableConcept"
+      ] as Coding;
+      mapCoding(valueCodableConcept, "Observation");
+    }
+    // If the current resource is a Staging Code...
     if (
       entry.resource.resourceType == "Condition" &&
       entry.resource["stage"] != undefined
@@ -117,10 +132,10 @@ export function performCodeMapping(
       const staging = entry.resource["stage"] as Stage[];
       for (const stage of staging) {
         if (stage.summary != undefined) {
-          mapCoding(stage.summary);
+          mapCoding(stage.summary, "Condition");
         }
         if (stage.type != undefined) {
-          mapCoding(stage.type);
+          mapCoding(stage.type, "Condition");
         }
       }
     }
@@ -131,16 +146,23 @@ export function performCodeMapping(
 /*
  * Converts the codes in a given Coding based on the given mapping.
  */
-function mapCoding(coding: Coding) {
+function mapCoding(coding: Coding, resourceType: string) {
   // Check all the codes for conversion based on the given mapping.
   let count = 0;
   for (const currentCoding of coding.coding) {
     const origSystem: string = currentCoding.system;
+    let resultSystem = "http://snomed.info/sct";
     // set mapping
     let mapping = new Map<string, string>();
     if (origSystem != undefined) {
       if (origSystem.includes("rxnorm")) {
         mapping = rxnormSnomedMapping;
+      } else if (origSystem.includes("loinc")) {
+        mapping = loincBiomarkerMapping;
+        resultSystem = origSystem;
+      } else if (origSystem.includes("snomed") && resourceType == "Observation") {
+        mapping = snomedBiomarkerMapping;
+        resultSystem = "http://hl7.org/fhir/v2/0078/";
       } else if (origSystem.includes("snomed")) {
         mapping = stageSnomedMapping;
       } else if (origSystem.includes("ajcc") || origSystem.includes("cancerstaging.org")) {
@@ -151,7 +173,7 @@ function mapCoding(coding: Coding) {
     if (potentialNewCode != undefined) {
       // Code exists in the given mapping; update it.
       coding.coding[count].code = potentialNewCode;
-      coding.coding[count].system = "http://snomed.info/sct";
+      coding.coding[count].system = resultSystem;
       if (coding.coding[count].display != undefined) {
         coding.coding[count].display = undefined;
       }
