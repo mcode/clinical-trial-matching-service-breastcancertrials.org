@@ -149,6 +149,10 @@ export function performCodeMapping(
 function mapCoding(coding: Coding, resourceType: string) {
   // Check all the codes for conversion based on the given mapping.
   let count = 0;
+  // Check if coding is undefined in the event of an unexpected bundle format. If so, skip this resource.
+  if (coding == undefined) {
+    return;
+  }
   for (const currentCoding of coding.coding) {
     const origSystem: string = currentCoding.system;
     let resultSystem = "http://snomed.info/sct";
