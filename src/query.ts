@@ -166,7 +166,7 @@ function mapCoding(coding: Coding, resourceType: string) {
         resultSystem = origSystem;
       } else if (origSystem.includes("snomed") && resourceType == "Observation") {
         mapping = snomedBiomarkerMapping;
-        resultSystem = "http://hl7.org/fhir/v2/0078/";
+        resultSystem = "http://hl7.org/fhir/v2/0078";
       } else if (origSystem.includes("snomed")) {
         mapping = stageSnomedMapping;
       } else if (origSystem.includes("ajcc") || origSystem.includes("cancerstaging.org")) {
