@@ -5,7 +5,7 @@
 
 import {
   ClinicalStudy,
-  ClinicalTrialGovService,
+  ClinicalTrialsGovService,
   fhir,
   SearchSet,
   ServiceConfiguration,
@@ -67,7 +67,7 @@ export function updateResearchStudy(researchStudy: fhir.ResearchStudy, clinicalS
  */
 export function createClinicalTrialLookup(
   configuration: QueryConfiguration,
-  backupService: ClinicalTrialGovService
+  backupService: ClinicalTrialsGovService
 ): (patientBundle: Bundle) => Promise<SearchSet> {
   // Raise errors on missing configuration
   if (typeof configuration.api_endpoint !== "string") {
