@@ -5,7 +5,7 @@ import ClinicalTrialMatchingService, {
   configFromEnv,
   ClinicalTrialsGovService,
 } from "clinical-trial-matching-service";
-import { importRxnormSnomedMapping, importStageSnomedMapping, importStageAjccMapping, importLoincBiomarkerMapping, importSnomedHl7Mapping } from "./breastcancertrials";
+import { importRxnormSnomedMapping, importStageSnomedMapping, importStageAjccMapping, importLoincBiomarkerMapping, importSnomedHl7Mapping  } from "./breastcancertrials";
 import * as dotenv from "dotenv-flow";
 
 export class BreastCancerTrialsService extends ClinicalTrialMatchingService {
@@ -47,7 +47,7 @@ export default function start(): Promise<ClinicalTrialMatchingService> {
     default_node_env: "development",
   });
   const service = new BreastCancerTrialsService(configFromEnv(""));
-  return service.init().then(() => {
-    return service.listen().then(() => service);
-  });
+  return service.init();// => {
+    // return service.listen().then(() => service);
+  // });
 }

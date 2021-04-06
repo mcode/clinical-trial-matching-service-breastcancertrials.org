@@ -65,7 +65,7 @@ export function updateResearchStudy(researchStudy: fhir.ResearchStudy, clinicalS
  *    updateResarchStudy method is "monkey patched" to update how trials are
  *    converted.)
  */
-export function createClinicalTrialLookup(
+ export function createClinicalTrialLookup(
   configuration: QueryConfiguration,
   backupService: ClinicalTrialsGovService
 ): (patientBundle: Bundle) => Promise<SearchSet> {

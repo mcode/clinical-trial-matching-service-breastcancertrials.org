@@ -2,7 +2,7 @@
   "name": "clinical-trial-matching-service-breastcancertrials.org",
   "version": "1.0.0",
   "description": "Matching service wrapper that works with breastcancertrials.org",
-  "main": "dist/server.js",
+  "main": "dist/index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/mcode/clinical-trial-matching-service-beastcancertrials.org.git"
@@ -22,8 +22,9 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
+    "aws-xray-sdk": "^3.2.0",
     "body-parser": "^1.19.0",
-    "clinical-trial-matching-service": "github:mcode/clinical-trial-matching-service",
+    "clinical-trial-matching-service": "~/Documents/code/clinical-trial-matching/clinical-trial-matching-service-bct-lambda/clinical-trial-matching-service-breastcancertrials-lambda/clinical-trial-matching-service",
     "csv-parser": "^3.0.0",
     "dotenv-flow": "^3.2.0",
     "express": "^4.17.1",
