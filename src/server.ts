@@ -3,18 +3,18 @@
 import { createClinicalTrialLookup } from "./query";
 import ClinicalTrialMatchingService, {
   configFromEnv,
-  ClinicalTrialGovService,
+  ClinicalTrialsGovService,
 } from "clinical-trial-matching-service";
 import { importRxnormSnomedMapping, importStageSnomedMapping, importStageAjccMapping, importLoincBiomarkerMapping, importSnomedHl7Mapping } from "./breastcancertrials";
 import * as dotenv from "dotenv-flow";
 
 export class BreastCancerTrialsService extends ClinicalTrialMatchingService {
-  backupService: ClinicalTrialGovService;
+  backupService: ClinicalTrialsGovService;
   constructor(config: Record<string, string | number>) {
     // Need to instantiate the backup service first - note that it is NOT
     // initialized here
     // TODO: Make this configurable
-    const backupService = new ClinicalTrialGovService(
+    const backupService = new ClinicalTrialsGovService(
       "clinicaltrial-backup-cache"
     );
     super(createClinicalTrialLookup(config, backupService), config);
