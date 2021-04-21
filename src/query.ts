@@ -173,7 +173,7 @@ function mapCoding(coding: Coding, resourceType: string) {
         mapping = ajccStageSnomedMapping;
       }
     }
-    const potentialNewCode: string = mapping.get(currentCoding.code);
+    const potentialNewCode: string = mapping.get(currentCoding.code.toLowerCase());
     if (potentialNewCode != undefined) {
       // Code exists in the given mapping; update it.
       coding.coding[count].code = potentialNewCode;
