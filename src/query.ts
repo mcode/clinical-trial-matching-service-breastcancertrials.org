@@ -5,7 +5,7 @@
 
 import {
   ClinicalStudy,
-  ClinicalTrialsGovService,
+  ClinicalTrialGovService,
   fhir,
   SearchSet,
   ServiceConfiguration,
@@ -67,7 +67,7 @@ export function updateResearchStudy(researchStudy: fhir.ResearchStudy, clinicalS
  */
 export function createClinicalTrialLookup(
   configuration: QueryConfiguration,
-  backupService: ClinicalTrialsGovService
+  backupService: ClinicalTrialGovService
 ): (patientBundle: Bundle) => Promise<SearchSet> {
   // Raise errors on missing configuration
   if (typeof configuration.api_endpoint !== "string") {
@@ -173,7 +173,7 @@ function mapCoding(coding: Coding, resourceType: string) {
         mapping = ajccStageSnomedMapping;
       }
     }
-    const potentialNewCode: string = mapping.get(currentCoding.code);
+    const potentialNewCode: string = mapping.get(currentCoding.code.toLowerCase());
     if (potentialNewCode != undefined) {
       // Code exists in the given mapping; update it.
       coding.coding[count].code = potentialNewCode;

@@ -1,4 +1,4 @@
-import { ClinicalTrialsGovService, ClinicalTrialMatcher, fhir } from "clinical-trial-matching-service";
+import { ClinicalTrialGovService, ClinicalTrialMatcher, fhir } from "clinical-trial-matching-service";
 import { APIError, createClinicalTrialLookup, performCodeMapping, sendQuery, updateResearchStudy } from "../src/query";
 import nock from "nock";
 import {
@@ -12,7 +12,7 @@ import { createExampleTrialResponse, createEmptyClinicalStudy, createEmptyBundle
 
 describe(".createClinicalTrialLookup", () => {
   it("raises an error if missing an endpoint", () => {
-    const backupService = new ClinicalTrialsGovService("temp");
+    const backupService = new ClinicalTrialGovService("temp");
     expect(() => {
       createClinicalTrialLookup({}, backupService);
     }).toThrowError("Missing API_ENDPOINT in configuration");
@@ -20,19 +20,19 @@ describe(".createClinicalTrialLookup", () => {
 
   it("creates a function", () => {
     expect(
-      typeof createClinicalTrialLookup({ api_endpoint: "http://www.example.com/" }, new ClinicalTrialsGovService("temp"))
+      typeof createClinicalTrialLookup({ api_endpoint: "http://www.example.com/" }, new ClinicalTrialGovService("temp"))
     ).toEqual("function");
   });
 
   describe("generated matcher function", () => {
     const endpoint = "http://www.example.com/endpoint";
     let matcher: ClinicalTrialMatcher;
-    let backupService: ClinicalTrialsGovService;
+    let backupService: ClinicalTrialGovService;
     let scope: nock.Scope;
     let interceptor: nock.Interceptor;
     beforeEach(() => {
       // Note: backupService is never initialized therefore it won't actually work
-      backupService = new ClinicalTrialsGovService("temp");
+      backupService = new ClinicalTrialGovService("temp");
       // Don't actually download anything
       spyOn(backupService, "updateResearchStudies").and.callFake((studies) => {
         return Promise.resolve(studies);
