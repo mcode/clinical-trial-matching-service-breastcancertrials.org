@@ -83,6 +83,7 @@ describe("performCodeMapping()", () => {
       importStageAjccMapping()
     ]);
   });
+
   it("ignores invalid entries", () => {
     const bundle: fhir.Bundle = {
       resourceType: "Bundle",
@@ -91,6 +92,21 @@ describe("performCodeMapping()", () => {
     };
     // This involves lying to TypeScript as it ensures we only add valid objects
     bundle.entry.push(({ foo: "bar" } as unknown) as fhir.BundleEntry);
+    // This entry is valid but is missing the medicationCodeableConcept that
+    // the mapping is actually looking for
+    bundle.entry.push({
+      resource: {
+        resourceType: "MedicationStatement",
+        code: {
+          coding: [
+            {
+              system: "http://example.com/",
+              code: "unknown"
+            }
+          ]
+        }
+      }
+    });
     performCodeMapping(bundle);
     // This test succeeds if it doesn't blow up
   });
