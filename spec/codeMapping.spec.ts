@@ -142,5 +142,15 @@ describe("Code Mapping Tests.", () => {
       (testPatientBundle.entry[9].resource["stage"] as Stage[])[1].type
         .coding[0].system
     ).toBe("http://snomed.info/sct");
+    throw JSON.stringify(testPatientBundle.entry[10].resource["stage"] as Stage[])
+    expect(
+    // Test that staging AJCC 1a maps to SNOMED 13104003.
+      (testPatientBundle.entry[10].resource["stage"] as Stage[])[0].type
+        .coding[0].code
+    ).toBe("13104003");
+    // expect(
+    //   (testPatientBundle.entry[10].resource["stage"] as Stage[])[0].type
+    //     .coding[0].system
+    // ).toBe("http://snomed.info/sct");
   });
 });
