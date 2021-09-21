@@ -20,12 +20,12 @@ describe(".createClinicalTrialLookup", () => {
 
   it("creates a function", () => {
     expect(
-      typeof createClinicalTrialLookup({ api_endpoint: "http://www.example.com/" }, new ClinicalTrialsGovService("temp"))
+      typeof createClinicalTrialLookup({ api_endpoint: "https://www.example.com/" }, new ClinicalTrialsGovService("temp"))
     ).toEqual("function");
   });
 
   describe("generated matcher function", () => {
-    const endpoint = "http://www.example.com/endpoint";
+    const endpoint = "https://www.example.com/endpoint";
     let matcher: ClinicalTrialMatcher;
     let backupService: ClinicalTrialsGovService;
     let scope: nock.Scope;
@@ -38,7 +38,7 @@ describe(".createClinicalTrialLookup", () => {
         return Promise.resolve(studies);
       });
       matcher = createClinicalTrialLookup({ api_endpoint: endpoint }, backupService);
-      scope = nock("http://www.example.com");
+      scope = nock("https://www.example.com");
       interceptor = scope.post("/endpoint");
     });
     afterEach(() => {
@@ -225,9 +225,9 @@ describe("updateResearchStudy()", () => {
 describe(".sendQuery", () => {
   let scope: nock.Scope;
   let interceptor: nock.Interceptor;
-  const endpoint = "http://www.example.com/endpoint";
+  const endpoint = "https://www.example.com/endpoint";
   beforeEach(() => {
-    scope = nock("http://www.example.com");
+    scope = nock("https://www.example.com");
     interceptor = scope.post("/endpoint");
   });
   afterEach(() => {
