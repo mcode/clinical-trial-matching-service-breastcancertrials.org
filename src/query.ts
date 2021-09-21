@@ -80,6 +80,9 @@ export function createClinicalTrialLookup(
   return function getMatchingClinicalTrials(
     patientBundle: Bundle
   ): Promise<SearchSet> {
+    // Add any staging information to the Primary Cancer Condition.
+    patientBundle = conformStageCoding(patientBundle);
+    // Perform the code mapping.
     patientBundle = performCodeMapping(patientBundle);
     // For now, the full patient bundle is the query
     return sendQuery(endpoint, JSON.stringify(patientBundle, null, 2)).then((result) => {
@@ -251,4 +254,39 @@ export function sendQuery(
     request.write(body);
     request.end();
   });
+}
+/**
+ * Conforms any staging data in the bundle to be part of the primary cancer condition.
+ * @param patientBundle
+ * @returns 
+ */
+export function conformStageCoding(patientBundle: fhir.Bundle): fhir.Bundle {
+
+  // TODO - update to find the first PCC.
+  const primaryCancerCondition = patientBundle.entry[1]
+
+  for (const entry of patientBundle.entry) {
+    if (!("resource" in entry)) {
+      // Skip bad entries
+      continue;
+    }
+
+    // If the current entry is a TNMClinicalStageGroup:
+    if((entry.resource['meta']['profile'] as string[]).includes("http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-clinical-stage-group")) {
+      const rawStageCoding: Coding[] = entry.resource['valueCodeableConcept']['coding'];
+      const stageCoding: Coding = {coding: rawStageCoding} as Coding;
+      const newStage: Stage = {type: stageCoding, summary: stageCoding};
+      (primaryCancerCondition.resource['stage'] as Stage[]).push(newStage);
+    }
+
+    // If the current entry is a TNMPathologicalStageGroup:
+    if((entry.resource['meta']['profile'] as string[]).includes("http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-pathological-stage-group")) {
+      const rawStageCoding: Coding[] = entry.resource['valueCodeableConcept']['coding'];
+      const stageCoding: Coding = {coding: rawStageCoding} as Coding;
+      const newStage: Stage = {type: stageCoding, summary: stageCoding};
+      (primaryCancerCondition.resource['stage'] as Stage[]).push(newStage);
+    }
+  }
+
+  return patientBundle;
 }

@@ -107,10 +107,11 @@ export interface Coding {
     code?: string;
     display?: string;
   }[];
-  text: string;
+  text?: string;
 }
 
-export interface Stage {
-  type: Coding;
-  summary: Coding;
+export interface Stage{
+  type?: Coding;
+  summary?: Coding;
+  assesment?: {refrence: string}[];
 }
