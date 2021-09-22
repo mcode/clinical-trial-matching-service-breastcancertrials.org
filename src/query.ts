@@ -262,31 +262,55 @@ export function sendQuery(
  */
 export function conformStageCoding(patientBundle: fhir.Bundle): fhir.Bundle {
 
-  // TODO - update to find the first PCC.
-  const primaryCancerCondition = patientBundle.entry[1]
+  // Extract the primary cancer condition.
+  const primaryCancerCondition = extractPrimaryCancerCondition(patientBundle);
+  if(primaryCancerCondition == undefined) {
+    // There is no primary cancer condition, thus nowhere to move staging.
+    return patientBundle;
+  }
+
+  // Function to extract a stage resource's stage codes and add to the primary cancer condition.
+  const extractStageResource = (entry: fhir.BundleEntry) => {
+    const rawStageCoding: Coding[] = entry.resource['valueCodeableConcept']['coding'];
+    const stageCoding: Coding = {coding: rawStageCoding} as Coding;
+    const newStage: Stage = {type: stageCoding, summary: stageCoding};
+    (primaryCancerCondition.resource['stage'] as Stage[]).push(newStage);
+  };
 
   for (const entry of patientBundle.entry) {
     if (!("resource" in entry)) {
       // Skip bad entries
       continue;
     }
-
-    // If the current entry is a TNMClinicalStageGroup:
+    // If the current entry is a TNMClinicalStageGroup, extract the stage for primary cancer condition.
     if((entry.resource['meta']['profile'] as string[]).includes("http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-clinical-stage-group")) {
-      const rawStageCoding: Coding[] = entry.resource['valueCodeableConcept']['coding'];
-      const stageCoding: Coding = {coding: rawStageCoding} as Coding;
-      const newStage: Stage = {type: stageCoding, summary: stageCoding};
-      (primaryCancerCondition.resource['stage'] as Stage[]).push(newStage);
+      extractStageResource(entry);
     }
-
-    // If the current entry is a TNMPathologicalStageGroup:
+    // If the current entry is a TNMPathologicalStageGroup, extract the stage for primary cancer condition.
     if((entry.resource['meta']['profile'] as string[]).includes("http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-pathological-stage-group")) {
-      const rawStageCoding: Coding[] = entry.resource['valueCodeableConcept']['coding'];
-      const stageCoding: Coding = {coding: rawStageCoding} as Coding;
-      const newStage: Stage = {type: stageCoding, summary: stageCoding};
-      (primaryCancerCondition.resource['stage'] as Stage[]).push(newStage);
+      extractStageResource(entry);
     }
   }
 
   return patientBundle;
 }
+
+/**
+ * Extract the first primary cancer condition object from the patient bundle.
+ * @param patientBundle 
+ * @returns 
+ */
+function extractPrimaryCancerCondition(patientBundle: fhir.Bundle): fhir.BundleEntry {
+  for (const entry of patientBundle.entry) {
+    if (!("resource" in entry)) {
+      // Skip bad entries
+      continue;
+    }
+    // If the current entry is a TNMClinicalStageGroup, extract the stage for primary cancer condition.
+    if((entry.resource['meta']['profile'] as string[]).includes("http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-primary-cancer-condition")) {
+      return entry;
+    }
+  }
+  return undefined;
+}
+

@@ -96,7 +96,7 @@ describe("Code Mapping Tests.", () => {
     ).toBe("64062008");
     expect(
       (testPatientBundle.entry[2].resource["stage"] as Stage[])[0].type
-        .coding[0].system
+        .coding[0].system 
     ).toBe("http://snomed.info/sct");
     // Test that LOINC code 34566 Does NOT map to anything else (located in entry[3] in patient_data).
     expect(
@@ -172,14 +172,14 @@ describe("Code Mapping Tests.", () => {
     // ).toBe("http://snomed.info/sct");
   });
 
-  it("Test Coding Mappings.", function () {
+  it("Test Stage Location Conforming.", function () {
     // Conform the staging values to the Primary Cancer Condition.
     conformStageCoding(testPatientBundleStagePlacement);
 
-    // Check array equality
+    // Function to check stage array equality for testing.
     const stageArrayIsWithinStageArray = (fullArray: Stage[], subArray: Stage[]) => {
 
-      const codingsMatch = (coding1: Coding, coding2: Coding) => {
+      const doCodingsMatch = (coding1: Coding, coding2: Coding) => {
         for(const currentCoding1 of coding1.coding){
           if(coding2.coding.some(currentCoding2 => currentCoding1.code == currentCoding2.code && currentCoding1.system == currentCoding2.system)){
             return true;
@@ -189,14 +189,14 @@ describe("Code Mapping Tests.", () => {
       }
 
       for(const subObj of subArray){
-        if(fullArray.filter(fullObj => codingsMatch(fullObj.type, subObj.type) || codingsMatch(fullObj.summary, subObj.summary)).length < 1){
+        if(fullArray.filter(fullObj => doCodingsMatch(fullObj.type, subObj.type) || doCodingsMatch(fullObj.summary, subObj.summary)).length < 1){
           return false;
         }
       }
       return true;
     }
 
-    // Build expected stage object.
+    // Build and test the expected stage object.
     const expectedClinicalStageCoding: Coding = {coding: [{system: "http://snomed.info/sct", code: "261638004", display: ""}], text: ""} as Coding;
     const expectedPathologicalStageCoding: Coding = {coding: [{system: "http://snomed.info/sct", code: "50283003", display: ""}], text: ""} as Coding;
     const expectedStaging: Stage[] = [];
