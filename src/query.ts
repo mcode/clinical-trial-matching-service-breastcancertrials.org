@@ -255,6 +255,7 @@ export function sendQuery(
     request.end();
   });
 }
+
 /**
  * Conforms any staging data in the bundle to be part of the primary cancer condition.
  * @param patientBundle

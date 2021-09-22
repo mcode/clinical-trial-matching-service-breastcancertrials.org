@@ -160,16 +160,63 @@ describe("Code Mapping Tests.", () => {
       (testPatientBundle.entry[9].resource["stage"] as Stage[])[1].type
         .coding[0].system
     ).toBe("http://snomed.info/sct");
-    // throw JSON.stringify(testPatientBundle.entry[10].resource["stage"] as Stage[])
-    // expect(
-    // // Test that staging AJCC 1a maps to SNOMED 13104003.
-    //   (testPatientBundle.entry[10].resource["stage"] as Stage[])[0].type
-    //     .coding[0].code
-    // ).toBe("13104003");
-    // expect(
-    //   (testPatientBundle.entry[10].resource["stage"] as Stage[])[0].type
-    //     .coding[0].system
-    // ).toBe("http://snomed.info/sct");
+    // Test AJCC Mappings.
+    // Test that staging AJCC 1b maps to SNOMED 13104003.
+    let testObject = (testPatientBundle.entry[11].resource["stage"] as Stage[])[0].type.coding[0]
+    expect(
+      testObject.system
+    ).toBe("http://snomed.info/sct");
+    expect(
+      testObject.code
+    ).toBe("13104003");
+    // Test that staging AJCC 3 maps to SNOMED 50283003.
+    testObject = (testPatientBundle.entry[11].resource["stage"] as Stage[])[0].type.coding[1]
+    expect(
+      testObject.system
+    ).toBe("http://snomed.info/sct");
+    expect(
+      testObject.code
+    ).toBe("50283003");
+    // Test that staging AJCC 1c maps to SNOMED 13104003.
+    testObject = (testPatientBundle.entry[11].resource["stage"] as Stage[])[0].summary.coding[0]
+    expect(
+      testObject.system
+    ).toBe("http://snomed.info/sct");
+    expect(
+      testObject.code
+    ).toBe("13104003");
+    // Test that staging AJCC 2a maps to SNOMED 52774001.
+    testObject = (testPatientBundle.entry[11].resource["stage"] as Stage[])[0].summary.coding[1]
+    expect(
+      testObject.system
+    ).toBe("http://snomed.info/sct");
+    expect(
+      testObject.code
+    ).toBe("52774001");
+    // Test that staging AJCC 1d maps to SNOMED 13104003.
+    testObject = (testPatientBundle.entry[11].resource["stage"] as Stage[])[0].summary.coding[2]
+    expect(
+      testObject.system
+    ).toBe("http://snomed.info/sct");
+    expect(
+      testObject.code
+    ).toBe("13104003");
+    // Test that staging AJCC 4d maps to SNOMED 52865009.
+    testObject = (testPatientBundle.entry[11].resource["stage"] as Stage[])[0].summary.coding[3]
+    expect(
+      testObject.system
+    ).toBe("http://snomed.info/sct");
+    expect(
+      testObject.code
+    ).toBe("52865009");
+    // Test that staging AJCC 1a maps to SNOMED 13104003.
+    testObject = (testPatientBundle.entry[11].resource["stage"] as Stage[])[0].summary.coding[4]
+    expect(
+      testObject.system
+    ).toBe("http://snomed.info/sct");
+    expect(
+      testObject.code
+    ).toBe("13104003");
   });
 
   it("Test Stage Location Conforming.", function () {
@@ -196,7 +243,7 @@ describe("Code Mapping Tests.", () => {
       return true;
     }
 
-    // Build and test the expected stage object.
+    // Build and test with the expected stage object.
     const expectedClinicalStageCoding: Coding = {coding: [{system: "http://snomed.info/sct", code: "261638004", display: ""}], text: ""} as Coding;
     const expectedPathologicalStageCoding: Coding = {coding: [{system: "http://snomed.info/sct", code: "50283003", display: ""}], text: ""} as Coding;
     const expectedStaging: Stage[] = [];
