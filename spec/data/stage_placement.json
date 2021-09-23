@@ -3,6 +3,9 @@
     "type": "transaction",
     "entry": [
         {
+            "fullUrl": "NON-RESOURCE-TEST"
+        },
+        {
             "fullUrl": "urn:uuid:1e208b6b-77f1-4808-a32b-9f9caf1ec334",
             "resource": {
                 "resourceType": "Patient",
@@ -420,7 +423,7 @@
                 "issued": "2017-07-21T23:41:09.044-04:00",
                 "valueCodeableConcept": {
                     "coding": [
-                        { 
+                        {
                             "system": "http://snomed.info/sct",
                             "code": "261638004",
                             "display": "Stage 3A (qualifier value)"

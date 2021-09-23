@@ -279,16 +279,12 @@ export function conformStageCoding(patientBundle: fhir.Bundle): fhir.Bundle {
   };
 
   for (const entry of patientBundle.entry) {
-    if (!("resource" in entry)) {
-      // Skip bad entries
-      continue;
-    }
     // If the current entry is a TNMClinicalStageGroup, extract the stage for primary cancer condition.
-    if((entry.resource['meta']['profile'] as string[]).includes("http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-clinical-stage-group")) {
+    if(entryIsProfile(entry, "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-clinical-stage-group")) {
       extractStageResource(entry);
     }
     // If the current entry is a TNMPathologicalStageGroup, extract the stage for primary cancer condition.
-    if((entry.resource['meta']['profile'] as string[]).includes("http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-pathological-stage-group")) {
+    if(entryIsProfile(entry, "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-pathological-stage-group")) {
       extractStageResource(entry);
     }
   }
@@ -303,15 +299,25 @@ export function conformStageCoding(patientBundle: fhir.Bundle): fhir.Bundle {
  */
 function extractPrimaryCancerCondition(patientBundle: fhir.Bundle): fhir.BundleEntry {
   for (const entry of patientBundle.entry) {
-    if (!("resource" in entry)) {
-      // Skip bad entries
-      continue;
-    }
     // If the current entry is a TNMClinicalStageGroup, extract the stage for primary cancer condition.
-    if((entry.resource['meta']['profile'] as string[]).includes("http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-primary-cancer-condition")) {
+    if(entryIsProfile(entry, "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-primary-cancer-condition")) {
       return entry;
     }
   }
   return undefined;
+}
+
+/**
+ * Returns whether the given entry's meta.profile matches the desired profile.
+ * @param entry The entry to check.
+ * @param profile The profile to check for.
+ * @returns 
+ */
+function entryIsProfile(entry: fhir.BundleEntry, profile: string): boolean {
+  if (!("resource" in entry)) {
+    // Skip bad entries
+    return false;
+  }
+  return (entry.resource['meta']['profile'] as string[]).includes(profile);
 }
 

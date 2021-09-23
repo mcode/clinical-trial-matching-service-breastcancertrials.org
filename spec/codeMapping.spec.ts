@@ -236,7 +236,7 @@ describe("Code Mapping Tests.", () => {
       }
 
       for(const subObj of subArray){
-        if(fullArray.filter(fullObj => doCodingsMatch(fullObj.type, subObj.type) || doCodingsMatch(fullObj.summary, subObj.summary)).length < 1){
+        if(!fullArray.some(fullObj => doCodingsMatch(fullObj.type, subObj.type) || doCodingsMatch(fullObj.summary, subObj.summary))){
           return false;
         }
       }
@@ -249,8 +249,6 @@ describe("Code Mapping Tests.", () => {
     const expectedStaging: Stage[] = [];
     expectedStaging.push({type: expectedClinicalStageCoding, summary: expectedClinicalStageCoding} as Stage);
     expectedStaging.push({type: expectedPathologicalStageCoding, summary: expectedPathologicalStageCoding} as Stage);
-    expect(stageArrayIsWithinStageArray(testPatientBundleStagePlacement.entry[1].resource["stage"], expectedStaging)).toBeTrue();
+    expect(stageArrayIsWithinStageArray(testPatientBundleStagePlacement.entry[2].resource["stage"], expectedStaging)).toBeTrue();
   });
-
-  // TODO: Fix an issue where patient data JSON is not always properly read in.
 });
