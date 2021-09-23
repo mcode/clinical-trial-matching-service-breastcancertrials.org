@@ -19,7 +19,8 @@ import {
   ajccStageSnomedMapping,
   loincBiomarkerMapping,
   snomedBiomarkerMapping,
-  TrialResponse
+  TrialResponse,
+  Meta
 } from "./breastcancertrials";
 import { convertToResearchStudy } from "./research-study";
 
@@ -272,8 +273,7 @@ export function conformStageCoding(patientBundle: fhir.Bundle): fhir.Bundle {
 
   // Function to extract a stage resource's stage codes and add to the primary cancer condition.
   const extractStageResource = (entry: fhir.BundleEntry) => {
-    const rawStageCoding: Coding[] = entry.resource['valueCodeableConcept']['coding'];
-    const stageCoding: Coding = {coding: rawStageCoding} as Coding;
+    const stageCoding: Coding = (entry.resource['valueCodeableConcept'] as Coding);
     const newStage: Stage = {type: stageCoding, summary: stageCoding};
     (primaryCancerCondition.resource['stage'] as Stage[]).push(newStage);
   };
@@ -318,6 +318,6 @@ function entryIsProfile(entry: fhir.BundleEntry, profile: string): boolean {
     // Skip bad entries
     return false;
   }
-  return (entry.resource['meta']['profile'] as string[]).includes(profile);
+  return ((entry.resource['meta'] as Meta)['profile']).includes(profile);
 }
 

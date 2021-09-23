@@ -115,3 +115,7 @@ export interface Stage{
   summary?: Coding;
   assesment?: {refrence: string}[];
 }
+
+export interface Meta{
+  profile: string[]
+}
