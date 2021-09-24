@@ -25,7 +25,7 @@ import { convertToResearchStudy } from "./research-study";
 
 type Bundle = fhir.Bundle;
 
-import http from "http"; // changed from https
+import https from "https"; 
 import { IncomingMessage } from "http";
 
 type JsonObject = Record<string, unknown> | Array<unknown>;
@@ -83,7 +83,14 @@ export function createClinicalTrialLookup(
     patientBundle = performCodeMapping(patientBundle);
     // For now, the full patient bundle is the query
     return sendQuery(endpoint, JSON.stringify(patientBundle, null, 2)).then((result) => {
-      return backupService.updateResearchStudies(result.map(convertToResearchStudy)).then((studies) => new SearchSet(studies));
+      return backupService.updateResearchStudies(result.map(convertToResearchStudy)).then((studies) => {
+        const ss = new SearchSet();
+        for (const study of studies) {
+          // If returned from BCT, then the study has a match likelihood of 1
+          ss.addEntry(study, 1);
+        }
+        return ss;
+      });
     });
   };
 }
@@ -194,7 +201,8 @@ export function sendQuery(
     const body = Buffer.from(query, "utf8");
     console.log("Running raw query");
     console.log(query);
-    const request = http.request(
+
+    const request = https.request(
       endpoint,
       {
         method: "POST",
