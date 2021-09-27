@@ -314,10 +314,10 @@ function extractPrimaryCancerCondition(patientBundle: fhir.Bundle): fhir.BundleE
  * @returns 
  */
 function entryIsProfile(entry: fhir.BundleEntry, profile: string): boolean {
-  if (!("resource" in entry)) {
+  if (!('resource' in entry) || (entry['resource']['meta'] == undefined) || (entry['resource']['meta']['profile'] == undefined)) {
     // Skip bad entries
     return false;
   }
-  return ((entry.resource['meta'] as Meta)['profile']).includes(profile);
+  return ((entry['resource']['meta'] as Meta)['profile']).includes(profile);
 }
 
