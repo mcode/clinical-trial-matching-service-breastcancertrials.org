@@ -8,7 +8,7 @@ describe('BreastCancerTrialsService', () => {
     let service: BreastCancerTrialsService;
     let server: http.Server;
     beforeAll(async () => {
-      service = new BreastCancerTrialsService({ api_endpoint: 'http://localhost/', port: 0 });
+      service = new BreastCancerTrialsService({ endpoint: 'http://localhost/', port: 0 });
       await service.init();
       server = await service.listen();
     });
@@ -40,13 +40,13 @@ describe('BreastCancerTrialsService', () => {
     it("raises an error if the endpoint isn't given", () => {
       expect(() => {
         new BreastCancerTrialsService({});
-      }).toThrowError('Missing API_ENDPOINT in configuration');
+      }).toThrowError('Missing endpoint in configuration');
     });
   });
 });
 
 describe('start()', () => {
-  const testedValues = ['NODE_ENV', 'API_ENDPOINT'];
+  const testedValues = ['NODE_ENV', 'MATCHING_SERVICE_ENDPOINT'];
   const initialEnv: Record<string, string | undefined> = {};
   beforeAll(() => {
     // Store the environment variables we're going to clobber in these tests
@@ -66,11 +66,11 @@ describe('start()', () => {
   });
   it('loads configuration via dotenv-flow', () => {
     process.env.NODE_ENV = 'test';
-    process.env.API_ENDPOINT = 'https://www.example.com/test/endpoint';
-    process.env.PORT = '0';
+    process.env.MATCHING_SERVICE_ENDPOINT = 'https://www.example.com/test/endpoint';
+    process.env.MATCHING_SERVICE_PORT = '3005';
     return expectAsync(
       start().then((service) => {
-        expect(service.port).toEqual(0);
+        expect(service.port).toEqual(3005);
         // TODO: Figure out a way to see what the API endpoint got set to
       })
     ).toBeResolved();
