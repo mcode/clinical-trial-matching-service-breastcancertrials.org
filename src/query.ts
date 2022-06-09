@@ -70,10 +70,10 @@ export function createClinicalTrialLookup(
   backupService: ClinicalTrialsGovService
 ): (patientBundle: Bundle) => Promise<SearchSet> {
   // Raise errors on missing configuration
-  if (typeof configuration.api_endpoint !== "string") {
-    throw new Error("Missing API_ENDPOINT in configuration");
+  if (typeof configuration.endpoint !== "string") {
+    throw new Error("Missing endpoint in configuration");
   }
-  const endpoint = configuration.api_endpoint;
+  const endpoint = configuration.endpoint;
   // FIXME: While this is sort of the intended usage, it potentially wipes out
   // customizations from the object passed in
   backupService.updateResearchStudy = updateResearchStudy;
