@@ -15,12 +15,12 @@ describe(".createClinicalTrialLookup", () => {
     const backupService = new ClinicalTrialsGovService("temp");
     expect(() => {
       createClinicalTrialLookup({}, backupService);
-    }).toThrowError("Missing API_ENDPOINT in configuration");
+    }).toThrowError("Missing endpoint in configuration");
   });
 
   it("creates a function", () => {
     expect(
-      typeof createClinicalTrialLookup({ api_endpoint: "https://www.example.com/" }, new ClinicalTrialsGovService("temp"))
+      typeof createClinicalTrialLookup({ endpoint: "https://www.example.com/" }, new ClinicalTrialsGovService("temp"))
     ).toEqual("function");
   });
 
@@ -37,7 +37,7 @@ describe(".createClinicalTrialLookup", () => {
       spyOn(backupService, "updateResearchStudies").and.callFake((studies) => {
         return Promise.resolve(studies);
       });
-      matcher = createClinicalTrialLookup({ api_endpoint: endpoint }, backupService);
+      matcher = createClinicalTrialLookup({ endpoint: endpoint }, backupService);
       scope = nock("https://www.example.com");
       interceptor = scope.post("/endpoint");
     });

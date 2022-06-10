@@ -46,7 +46,7 @@ export default function start(): Promise<ClinicalTrialMatchingService> {
     // The default environment to use if none is set
     default_node_env: "development",
   });
-  const service = new BreastCancerTrialsService(configFromEnv(""));
+  const service = new BreastCancerTrialsService(configFromEnv("MATCHING_SERVICE_"));
   return service.init().then(() => {
     return service.listen().then(() => service);
   });
