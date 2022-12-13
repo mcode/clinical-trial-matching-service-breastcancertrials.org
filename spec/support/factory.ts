@@ -1,15 +1,16 @@
-import { ClinicalStudy, fhir } from "clinical-trial-matching-service";
+import { ClinicalStudy } from "clinical-trial-matching-service";
+import { Bundle, FhirResource } from "fhir/r4";
 import { StatusEnum, StudyTypeEnum } from "clinical-trial-matching-service/dist/clinicalstudy";
 import { TrialResponse } from "../../src/breastcancertrials";
 
 /**
- * Create an empty patient bundle
+ * Create a patient bundle
  */
-export function createEmptyBundle(): fhir.Bundle {
+export function createBundle(resources?: FhirResource[]): Bundle<FhirResource> {
   return {
     resourceType: "Bundle",
     type: "collection",
-    entry: []
+    entry: resources ? resources.map(r => ({ resource: r })) : []
   };
 }
 
