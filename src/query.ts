@@ -19,7 +19,8 @@ import {
   ajccStageSnomedMapping,
   loincBiomarkerMapping,
   snomedBiomarkerMapping,
-  TrialResponse
+  TrialResponse,
+  Meta
 } from "./breastcancertrials";
 import { convertToResearchStudy } from "./research-study";
 
@@ -80,6 +81,9 @@ export function createClinicalTrialLookup(
   return function getMatchingClinicalTrials(
     patientBundle: Bundle
   ): Promise<SearchSet> {
+    // Add any staging information to the Primary Cancer Condition.
+    patientBundle = conformStageCoding(patientBundle);
+    // Perform the code mapping.
     patientBundle = performCodeMapping(patientBundle);
     // For now, the full patient bundle is the query
     return sendQuery(endpoint, JSON.stringify(patientBundle, null, 2)).then((result) => {
@@ -260,3 +264,68 @@ export function sendQuery(
     request.end();
   });
 }
+
+/**
+ * Conforms any staging data in the bundle to be part of the primary cancer condition.
+ * @param patientBundle
+ * @returns 
+ */
+export function conformStageCoding(patientBundle: fhir.Bundle): fhir.Bundle {
+
+  // Extract the primary cancer condition.
+  const primaryCancerCondition = extractPrimaryCancerCondition(patientBundle);
+  if(primaryCancerCondition == undefined) {
+    // There is no primary cancer condition, thus nowhere to move staging.
+    return patientBundle;
+  }
+
+  // Function to extract a stage resource's stage codes and add to the primary cancer condition.
+  const extractStageResource = (entry: fhir.BundleEntry) => {
+    const stageCoding: Coding = (entry.resource['valueCodeableConcept'] as Coding);
+    const newStage: Stage = {type: stageCoding, summary: stageCoding};
+    (primaryCancerCondition.resource['stage'] as Stage[]).push(newStage);
+  };
+
+  for (const entry of patientBundle.entry) {
+    // If the current entry is a TNMClinicalStageGroup, extract the stage for primary cancer condition.
+    if(entryIsProfile(entry, "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-clinical-stage-group")) {
+      extractStageResource(entry);
+    }
+    // If the current entry is a TNMPathologicalStageGroup, extract the stage for primary cancer condition.
+    if(entryIsProfile(entry, "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-pathological-stage-group")) {
+      extractStageResource(entry);
+    }
+  }
+
+  return patientBundle;
+}
+
+/**
+ * Extract the first primary cancer condition object from the patient bundle.
+ * @param patientBundle 
+ * @returns 
+ */
+function extractPrimaryCancerCondition(patientBundle: fhir.Bundle): fhir.BundleEntry {
+  for (const entry of patientBundle.entry) {
+    // If the current entry is a TNMClinicalStageGroup, extract the stage for primary cancer condition.
+    if(entryIsProfile(entry, "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-primary-cancer-condition")) {
+      return entry;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Returns whether the given entry's meta.profile matches the desired profile.
+ * @param entry The entry to check.
+ * @param profile The profile to check for.
+ * @returns 
+ */
+function entryIsProfile(entry: fhir.BundleEntry, profile: string): boolean {
+  if (!('resource' in entry) || (entry['resource']['meta'] == undefined) || (entry['resource']['meta']['profile'] == undefined)) {
+    // Skip bad entries
+    return false;
+  }
+  return ((entry['resource']['meta'] as Meta)['profile']).includes(profile);
+}
+
