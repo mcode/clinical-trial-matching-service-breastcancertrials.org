@@ -144,13 +144,13 @@ export function performCodeMapping(
 }
 
 /*
- * Converts the codes in a given Coding based on the given mapping.
+ * Converts the codes in a given CodeableConcept based on the given mapping.
  */
 function mapCoding(coding: CodeableConcept, resourceType: string) {
   // Check all the codes for conversion based on the given mapping.
   let count = 0;
   // Check if coding is undefined in the event of an unexpected bundle format. If so, skip this resource.
-  if (coding == undefined) {
+  if (coding == undefined || coding.coding == undefined) {
     return;
   }
   for (const currentCoding of coding.coding) {

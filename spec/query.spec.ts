@@ -200,6 +200,39 @@ describe("performCodeMapping()", () => {
   });
 });
 
+it("missing coding", () => {
+  const bundle = createBundle([
+    {
+      resourceType: "MedicationStatement",
+      status: "active",
+      subject: { }
+    },
+    {
+      resourceType: "MedicationStatement",
+      status: "active",
+      subject: { },
+      medicationCodeableConcept: {
+        text: "Example"
+      }
+    }
+  ]);
+  const result = performCodeMapping(bundle);
+  expect(result.entry?.length).toEqual(2);
+  
+  let resource = result.entry?.[0].resource;
+  expect(resource).toBeDefined();
+  expect(resource?.resourceType).toEqual("MedicationStatement");
+  let concept = resource?.["medicationCodeableConcept"] as CodeableConcept;
+  expect(concept).toBeUndefined();
+
+  resource = result.entry?.[1].resource;
+  expect(resource).toBeDefined();
+  expect(resource?.resourceType).toEqual("MedicationStatement");
+  concept = resource?.["medicationCodeableConcept"] as CodeableConcept;
+  expect(concept).toBeDefined();
+  expect(concept.coding).toBeUndefined();
+});
+
 describe("updateResearchStudy()", () => {
   it("does not update the description if none exists", () => {
     const researchStudy: ResearchStudy = { resourceType: "ResearchStudy", status: 'active' };
