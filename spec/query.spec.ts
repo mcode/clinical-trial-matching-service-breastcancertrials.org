@@ -200,7 +200,7 @@ describe("performCodeMapping()", () => {
   });
 });
 
-it("missing coding", () => {
+it("handles a missing codeableconcept or coding", () => {
   const bundle = createBundle([
     {
       resourceType: "MedicationStatement",
@@ -218,7 +218,7 @@ it("missing coding", () => {
   ]);
   const result = performCodeMapping(bundle);
   expect(result.entry?.length).toEqual(2);
-  
+
   let resource = result.entry?.[0].resource;
   expect(resource).toBeDefined();
   expect(resource?.resourceType).toEqual("MedicationStatement");
