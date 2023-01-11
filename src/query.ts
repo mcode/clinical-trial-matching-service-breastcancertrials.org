@@ -6,14 +6,12 @@
 import {
   ClinicalStudy,
   ClinicalTrialsGovService,
-  fhir,
   SearchSet,
   ServiceConfiguration,
   updateResearchStudyWithClinicalStudy
 } from "clinical-trial-matching-service";
+import { Bundle, CodeableConcept, Coding, ResearchStudy } from "fhir/r4";
 import {
-  Coding,
-  Stage,
   rxnormSnomedMapping,
   stageSnomedMapping,
   ajccStageSnomedMapping,
@@ -22,13 +20,8 @@ import {
   TrialResponse
 } from "./breastcancertrials";
 import { convertToResearchStudy } from "./research-study";
-
-type Bundle = fhir.Bundle;
-
-import https from "https"; 
+import https from "https";
 import { IncomingMessage } from "http";
-
-type JsonObject = Record<string, unknown> | Array<unknown>;
 
 export interface QueryConfiguration extends ServiceConfiguration {
   api_endpoint?: string;
@@ -49,7 +42,7 @@ export class APIError extends Error {
  * @param researchStudy the base research study
  * @param clinicalStudy the clinical study data from ClinicalTrials.gov
  */
-export function updateResearchStudy(researchStudy: fhir.ResearchStudy, clinicalStudy: ClinicalStudy): void {
+export function updateResearchStudy(researchStudy: ResearchStudy, clinicalStudy: ClinicalStudy): void {
   if (researchStudy.description) {
     const briefSummary = clinicalStudy.brief_summary;
     if (briefSummary) {
@@ -136,7 +129,7 @@ export function performCodeMapping(
       entry.resource["stage"] != undefined
     ) {
       // Cast to a Stage[] to access the stage's coding attributes.
-      const staging = entry.resource["stage"] as Stage[];
+      const staging = entry.resource["stage"];
       for (const stage of staging) {
         if (stage.summary != undefined) {
           mapCoding(stage.summary, "Condition");
@@ -151,13 +144,13 @@ export function performCodeMapping(
 }
 
 /*
- * Converts the codes in a given Coding based on the given mapping.
+ * Converts the codes in a given CodeableConcept based on the given mapping.
  */
-function mapCoding(coding: Coding, resourceType: string) {
+function mapCoding(coding: CodeableConcept, resourceType: string) {
   // Check all the codes for conversion based on the given mapping.
   let count = 0;
   // Check if coding is undefined in the event of an unexpected bundle format. If so, skip this resource.
-  if (coding == undefined) {
+  if (coding == undefined || coding.coding == undefined) {
     return;
   }
   for (const currentCoding of coding.coding) {

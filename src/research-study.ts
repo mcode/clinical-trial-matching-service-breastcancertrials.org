@@ -1,4 +1,5 @@
-import { fhir, ResearchStudy } from 'clinical-trial-matching-service';
+import { ResearchStudy } from 'clinical-trial-matching-service';
+import { CodeableConcept } from 'fhir/r4';
 import { TrialResponse } from './breastcancertrials';
 
 /*
@@ -32,8 +33,8 @@ export const phaseDisplayMap = new Map<string, string>([
   ["IV", "Phase 4"],
 ]);
 
-function convertArrayToCodeableConcept(trialConditions: string[]): fhir.CodeableConcept[] {
-  const fhirConditions: fhir.CodeableConcept[] = [];
+function convertArrayToCodeableConcept(trialConditions: string[]): CodeableConcept[] {
+  const fhirConditions: CodeableConcept[] = [];
   for (const condition of trialConditions) {
     fhirConditions.push({ text: condition });
   }

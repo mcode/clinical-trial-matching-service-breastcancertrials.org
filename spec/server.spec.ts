@@ -20,7 +20,7 @@ describe('BreastCancerTrialsService', () => {
       return request(server).get('/').set('Accept', 'application/json').expect(200);
     });
 
-    it('uses the query runner', (done) => {
+    it('uses the query runner', () => {
       const runQuery = spyOn(service, 'matcher').and.callFake(() => {
         return Promise.resolve(new SearchSet([]));
       });
@@ -29,9 +29,8 @@ describe('BreastCancerTrialsService', () => {
         .send({ resourceType: 'Bundle', type: 'collection', entry: [] })
         .set('Accept', 'application/json')
         .expect(200)
-        .end(() => {
+        .then(() => {
           expect(runQuery).toHaveBeenCalled();
-          done();
         });
     });
   });

@@ -1,14 +1,14 @@
-import { ClinicalTrialsGovService, ClinicalTrialMatcher, fhir } from "clinical-trial-matching-service";
+import { ClinicalTrialsGovService, ClinicalTrialMatcher } from "clinical-trial-matching-service";
 import { APIError, createClinicalTrialLookup, performCodeMapping, sendQuery, updateResearchStudy } from "../src/query";
 import nock from "nock";
+import { Bundle, BundleEntry, CodeableConcept, ResearchStudy } from "fhir/r4";
 import {
-  Coding,
   importRxnormSnomedMapping,
   importStageSnomedMapping,
   importStageAjccMapping
 } from "../src/breastcancertrials";
 import { isResearchStudy } from "clinical-trial-matching-service/dist/fhir-types";
-import { createExampleTrialResponse, createEmptyClinicalStudy, createEmptyBundle } from "./support/factory";
+import { createExampleTrialResponse, createEmptyClinicalStudy, createBundle } from "./support/factory";
 
 describe(".createClinicalTrialLookup", () => {
   it("raises an error if missing an endpoint", () => {
@@ -49,7 +49,7 @@ describe(".createClinicalTrialLookup", () => {
       // Reply with an empty array
       interceptor.reply(200, []);
       return expectAsync(
-        matcher(createEmptyBundle()).then((result) => {
+        matcher(createBundle()).then((result) => {
           expect(result.type).toEqual("searchset");
           // Rather than deal with casting just do this
           expect(result["total"]).toEqual(0);
@@ -61,8 +61,8 @@ describe(".createClinicalTrialLookup", () => {
     it("fills in missing data", () => {
       interceptor.reply(200, [createExampleTrialResponse()]);
       return expectAsync(
-        matcher(createEmptyBundle()).then((result) => {
-          const study = result.entry[0].resource;
+        matcher(createBundle()).then((result) => {
+          const study = result.entry?.[0].resource;
           if (isResearchStudy(study)) {
             expect(study.title).toEqual("Title");
           } else {
@@ -85,19 +85,21 @@ describe("performCodeMapping()", () => {
   });
 
   it("ignores invalid entries", () => {
-    const bundle: fhir.Bundle = {
+    const bundle: Bundle = {
       resourceType: "Bundle",
       type: "collection",
       entry: []
     };
     // This involves lying to TypeScript as it ensures we only add valid objects
-    bundle.entry.push(({ foo: "bar" } as unknown) as fhir.BundleEntry);
+    bundle.entry?.push(({ foo: "bar" } as unknown) as BundleEntry);
     // This entry is valid but is missing the medicationCodeableConcept that
     // the mapping is actually looking for
-    bundle.entry.push({
+    bundle.entry?.push({
       resource: {
         resourceType: "MedicationStatement",
-        code: {
+        status: "active",
+        subject: { },
+        medicationCodeableConcept: {
           coding: [
             {
               system: "http://example.com/",
@@ -112,23 +114,24 @@ describe("performCodeMapping()", () => {
   });
 
   it("maps properly", () => {
-    const bundle: fhir.Bundle = createEmptyBundle();
-    bundle.entry.push({
-      resource: {
+    const bundle = createBundle([
+      {
         resourceType: "MedicationStatement",
-        code: {
+        status: "active",
+        subject: { },
+        medicationCodeableConcept: {
+          text: "Example",
           coding: [
             {
-              system: undefined,
+              system: "http://cancerstaging.org",
               code: "4"
             }
           ]
         }
-      }
-    });
-    bundle.entry.push({
-      resource: {
+      },
+      {
         resourceType: "Condition",
+        subject: {},
         code: {
           coding: []
         },
@@ -157,31 +160,20 @@ describe("performCodeMapping()", () => {
           }
         ]
       }
-    } as fhir.BundleEntry);
-    const medicationCodableConcept: Coding = {
-      coding: [
-        {
-          system: "http://cancerstaging.org",
-          code: "4"
-        }
-      ],
-      text: "Example"
-    };
-    bundle.entry[0].resource["medicationCodeableConcept"] = medicationCodableConcept;
+    ]);
     const result = performCodeMapping(bundle);
-    expect(result.entry.length).toEqual(2);
-    let resource: fhir.Resource = result.entry[0].resource;
+    expect(result.entry?.length).toEqual(2);
+    let resource = result.entry?.[0].resource;
     expect(resource).toBeDefined();
-    expect(resource.resourceType).toEqual("MedicationStatement");
-    expect(resource["code"]).toEqual({ coding: [{ system: undefined, code: "4" }] });
-    const concept = resource["medicationCodeableConcept"] as Coding;
+    expect(resource?.resourceType).toEqual("MedicationStatement");
+    const concept = resource?.["medicationCodeableConcept"] as CodeableConcept;
     expect(concept).toBeDefined();
-    expect(concept.text).toEqual("Example");
-    expect(concept.coding).toEqual([{ system: "http://snomed.info/sct", code: "2640006" }]);
-    resource = result.entry[1].resource;
+    expect(concept?.text).toEqual("Example");
+    expect(concept?.coding).toEqual([{ system: "http://snomed.info/sct", code: "2640006" }]);
+    resource = result.entry?.[1].resource;
     expect(resource).toBeDefined();
     // At present, the condition resource should be unchanged
-    expect(resource["stage"]).toEqual([
+    expect(resource?.["stage"]).toEqual([
       {
         summary: {
           coding: [
@@ -208,15 +200,48 @@ describe("performCodeMapping()", () => {
   });
 });
 
+it("handles a missing codeableconcept or coding", () => {
+  const bundle = createBundle([
+    {
+      resourceType: "MedicationStatement",
+      status: "active",
+      subject: { }
+    },
+    {
+      resourceType: "MedicationStatement",
+      status: "active",
+      subject: { },
+      medicationCodeableConcept: {
+        text: "Example"
+      }
+    }
+  ]);
+  const result = performCodeMapping(bundle);
+  expect(result.entry?.length).toEqual(2);
+
+  let resource = result.entry?.[0].resource;
+  expect(resource).toBeDefined();
+  expect(resource?.resourceType).toEqual("MedicationStatement");
+  let concept = resource?.["medicationCodeableConcept"] as CodeableConcept;
+  expect(concept).toBeUndefined();
+
+  resource = result.entry?.[1].resource;
+  expect(resource).toBeDefined();
+  expect(resource?.resourceType).toEqual("MedicationStatement");
+  concept = resource?.["medicationCodeableConcept"] as CodeableConcept;
+  expect(concept).toBeDefined();
+  expect(concept.coding).toBeUndefined();
+});
+
 describe("updateResearchStudy()", () => {
   it("does not update the description if none exists", () => {
-    const researchStudy: fhir.ResearchStudy = { resourceType: "ResearchStudy" };
+    const researchStudy: ResearchStudy = { resourceType: "ResearchStudy", status: 'active' };
     updateResearchStudy(researchStudy, createEmptyClinicalStudy({ briefSummary: "ignore me" }));
     expect(researchStudy.description).not.toBeDefined();
   });
 
   it("does not update the description if there is no brief summary", () => {
-    const researchStudy: fhir.ResearchStudy = { resourceType: "ResearchStudy", description: "Do not change this" };
+    const researchStudy: ResearchStudy = { resourceType: "ResearchStudy", status: 'active', description: "Do not change this" };
     updateResearchStudy(researchStudy, createEmptyClinicalStudy());
     expect(researchStudy.description).toEqual("Do not change this");
   });

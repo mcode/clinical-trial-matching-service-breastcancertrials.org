@@ -100,17 +100,3 @@ export interface TrialResponse {
   noVisitsRequiredFlag: boolean;
   numberOfSites: string;
 }
-
-export interface Coding {
-  coding?: {
-    system?: string;
-    code?: string;
-    display?: string;
-  }[];
-  text: string;
-}
-
-export interface Stage {
-  type: Coding;
-  summary: Coding;
-}
