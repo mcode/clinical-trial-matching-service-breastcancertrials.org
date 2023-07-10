@@ -22,7 +22,7 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
-    "clinical-trial-matching-service": "^0.0.8",
+    "clinical-trial-matching-service": "^0.0.9",
     "csv-parser": "^3.0.0",
     "dotenv-flow": "^3.2.0",
     "express": "^4.17.1",
