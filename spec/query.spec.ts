@@ -2,12 +2,7 @@ import { ClinicalTrialsGovService, ClinicalTrialMatcher } from "clinical-trial-m
 import { APIError, createClinicalTrialLookup, performCodeMapping, sendQuery, updateResearchStudy } from "../src/query";
 import nock from "nock";
 import { Bundle, BundleEntry, CodeableConcept, ResearchStudy } from "fhir/r4";
-import {
-  importRxnormSnomedMapping,
-  importStageSnomedMapping,
-  importStageAjccMapping
-} from "../src/breastcancertrials";
-import { isResearchStudy } from "clinical-trial-matching-service/dist/fhir-types";
+import { importRxnormSnomedMapping, importStageSnomedMapping, importStageAjccMapping } from "../src/breastcancertrials";
 import { createExampleTrialResponse, createEmptyClinicalStudy, createBundle } from "./support/factory";
 
 describe(".createClinicalTrialLookup", () => {
@@ -63,7 +58,7 @@ describe(".createClinicalTrialLookup", () => {
       return expectAsync(
         matcher(createBundle()).then((result) => {
           const study = result.entry?.[0].resource;
-          if (isResearchStudy(study)) {
+          if (typeof study === 'object' && study?.resourceType === 'ResearchStudy') {
             expect(study.title).toEqual("Title");
           } else {
             fail("Expected research study");
@@ -77,11 +72,7 @@ describe(".createClinicalTrialLookup", () => {
 describe("performCodeMapping()", () => {
   beforeAll(() => {
     // Load all of the mappings "at once"
-    return Promise.all([
-      importRxnormSnomedMapping(),
-      importStageSnomedMapping(),
-      importStageAjccMapping()
-    ]);
+    return Promise.all([importRxnormSnomedMapping(), importStageSnomedMapping(), importStageAjccMapping()]);
   });
 
   it("ignores invalid entries", () => {
@@ -91,14 +82,14 @@ describe("performCodeMapping()", () => {
       entry: []
     };
     // This involves lying to TypeScript as it ensures we only add valid objects
-    bundle.entry?.push(({ foo: "bar" } as unknown) as BundleEntry);
+    bundle.entry?.push({ foo: "bar" } as unknown as BundleEntry);
     // This entry is valid but is missing the medicationCodeableConcept that
     // the mapping is actually looking for
     bundle.entry?.push({
       resource: {
         resourceType: "MedicationStatement",
         status: "active",
-        subject: { },
+        subject: {},
         medicationCodeableConcept: {
           coding: [
             {
@@ -118,7 +109,7 @@ describe("performCodeMapping()", () => {
       {
         resourceType: "MedicationStatement",
         status: "active",
-        subject: { },
+        subject: {},
         medicationCodeableConcept: {
           text: "Example",
           coding: [
@@ -205,12 +196,12 @@ it("handles a missing codeableconcept or coding", () => {
     {
       resourceType: "MedicationStatement",
       status: "active",
-      subject: { }
+      subject: {}
     },
     {
       resourceType: "MedicationStatement",
       status: "active",
-      subject: { },
+      subject: {},
       medicationCodeableConcept: {
         text: "Example"
       }
@@ -235,13 +226,17 @@ it("handles a missing codeableconcept or coding", () => {
 
 describe("updateResearchStudy()", () => {
   it("does not update the description if none exists", () => {
-    const researchStudy: ResearchStudy = { resourceType: "ResearchStudy", status: 'active' };
+    const researchStudy: ResearchStudy = { resourceType: "ResearchStudy", status: "active" };
     updateResearchStudy(researchStudy, createEmptyClinicalStudy({ briefSummary: "ignore me" }));
     expect(researchStudy.description).not.toBeDefined();
   });
 
   it("does not update the description if there is no brief summary", () => {
-    const researchStudy: ResearchStudy = { resourceType: "ResearchStudy", status: 'active', description: "Do not change this" };
+    const researchStudy: ResearchStudy = {
+      resourceType: "ResearchStudy",
+      status: "active",
+      description: "Do not change this"
+    };
     updateResearchStudy(researchStudy, createEmptyClinicalStudy());
     expect(researchStudy.description).toEqual("Do not change this");
   });
