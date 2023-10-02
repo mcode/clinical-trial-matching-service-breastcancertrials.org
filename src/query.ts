@@ -60,7 +60,7 @@ export function updateResearchStudy(researchStudy: ResearchStudy, clinicalStudy:
  */
 export function createClinicalTrialLookup(
   configuration: QueryConfiguration,
-  backupService: ClinicalTrialsGovService
+  backupService?: ClinicalTrialsGovService
 ): (patientBundle: Bundle) => Promise<SearchSet> {
   // Raise errors on missing configuration
   if (typeof configuration.endpoint !== "string") {
@@ -69,22 +69,25 @@ export function createClinicalTrialLookup(
   const endpoint = configuration.endpoint;
   // FIXME: While this is sort of the intended usage, it potentially wipes out
   // customizations from the object passed in
-  backupService.updateResearchStudy = updateResearchStudy;
-  return function getMatchingClinicalTrials(
+  if (backupService) {
+    backupService.updateResearchStudy = updateResearchStudy;
+  }
+  return async function getMatchingClinicalTrials(
     patientBundle: Bundle
   ): Promise<SearchSet> {
     patientBundle = performCodeMapping(patientBundle);
     // For now, the full patient bundle is the query
-    return sendQuery(endpoint, JSON.stringify(patientBundle, null, 2)).then((result) => {
-      return backupService.updateResearchStudies(result.map(convertToResearchStudy)).then((studies) => {
-        const ss = new SearchSet();
-        for (const study of studies) {
-          // If returned from BCT, then the study has a match likelihood of 1
-          ss.addEntry(study, 1);
-        }
-        return ss;
-      });
-    });
+    const result = await sendQuery(endpoint, JSON.stringify(patientBundle, null, 2));
+    const studies = result.map(convertToResearchStudy);
+    if (backupService) {
+      await backupService.updateResearchStudies(studies);
+    }
+    const ss = new SearchSet();
+    for (const study of studies) {
+      // If returned from BCT, then the study has a match likelihood of 1
+      ss.addEntry(study, 1);
+    }
+    return ss;
   };
 }
 
