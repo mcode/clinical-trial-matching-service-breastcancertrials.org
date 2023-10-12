@@ -8,7 +8,7 @@ import * as util from 'util';
 
 import { Fhir } from 'fhir/fhir';
 import { ValidatorMessage } from 'fhir/validator';
-import { parseClinicalTrialXML } from 'clinical-trial-matching-service';
+import { parseStudyJson } from 'clinical-trial-matching-service';
 
 function specPath(filePath: string): string {
   return path.join(__dirname, '../../spec', filePath);
@@ -21,10 +21,12 @@ describe('FHIR Validation', () => {
     const readFile = util.promisify(fs.readFile);
     const data = await readFile(specPath('data/trial_object.json'), { encoding: 'utf8' });
     const json: TrialResponse = JSON.parse(data) as TrialResponse;
-    const clinicalStudyXML = await readFile(specPath('data/NCT03377387.xml'), { encoding: 'utf8' });
-    const clinicalStudy = await parseClinicalTrialXML(clinicalStudyXML);
+    const clinicalStudyXML = await readFile(specPath('data/NCT03377387.json'), { encoding: 'utf8' });
+    const clinicalStudy = parseStudyJson(clinicalStudyXML);
     const study = convertToResearchStudy(json);
-    updateResearchStudy(study, clinicalStudy);
+    if (clinicalStudy) {
+      updateResearchStudy(study, clinicalStudy);
+    }
     const result = fhir.validate(study);
     if (result.messages && result.messages.length > 0) {
       console.error('Validation has messages:');

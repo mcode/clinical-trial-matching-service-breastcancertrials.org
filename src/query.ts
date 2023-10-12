@@ -4,7 +4,7 @@
  */
 
 import {
-  ClinicalStudy,
+  Study,
   ClinicalTrialsGovService,
   SearchSet,
   ServiceConfiguration,
@@ -42,11 +42,11 @@ export class APIError extends Error {
  * @param researchStudy the base research study
  * @param clinicalStudy the clinical study data from ClinicalTrials.gov
  */
-export function updateResearchStudy(researchStudy: ResearchStudy, clinicalStudy: ClinicalStudy): void {
+export function updateResearchStudy(researchStudy: ResearchStudy, clinicalStudy: Study): void {
   if (researchStudy.description) {
-    const briefSummary = clinicalStudy.brief_summary;
+    const briefSummary = clinicalStudy.protocolSection?.descriptionModule?.briefSummary;
     if (briefSummary) {
-      researchStudy.description += '\n\n' + briefSummary[0].textblock[0];
+      researchStudy.description += '\n\n' + briefSummary;
     }
   }
   updateResearchStudyWithClinicalStudy(researchStudy, clinicalStudy);
