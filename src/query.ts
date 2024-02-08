@@ -4,11 +4,9 @@
  */
 
 import {
-  Study,
   ClinicalTrialsGovService,
   SearchSet,
   ServiceConfiguration,
-  updateResearchStudyWithClinicalStudy
 } from "clinical-trial-matching-service";
 import { Bundle, CodeableConcept, Coding, ResearchStudy } from "fhir/r4";
 import {
@@ -38,20 +36,6 @@ export class APIError extends Error {
 }
 
 /**
- * Slight change to the default way research studies are updated.
- * @param researchStudy the base research study
- * @param clinicalStudy the clinical study data from ClinicalTrials.gov
- */
-export function updateResearchStudy(researchStudy: ResearchStudy, clinicalStudy: Study): void {
-  if (researchStudy.description) {
-    const briefSummary = clinicalStudy.protocolSection?.descriptionModule?.briefSummary;
-    if (briefSummary) {
-      researchStudy.description += '\n\n' + briefSummary;
-    }
-  }
-  updateResearchStudyWithClinicalStudy(researchStudy, clinicalStudy);
-}
-/**
  * Create a new matching function using the given configuration.
  * @param configuration the configuration to use to configure the matcher
  * @param backupService the backup service to use. (Note: at present, the
@@ -67,9 +51,6 @@ export function createClinicalTrialLookup(
     throw new Error("Missing endpoint in configuration");
   }
   const endpoint = configuration.endpoint;
-  // FIXME: While this is sort of the intended usage, it potentially wipes out
-  // customizations from the object passed in
-  backupService.updateResearchStudy = updateResearchStudy;
   return function getMatchingClinicalTrials(
     patientBundle: Bundle
   ): Promise<SearchSet> {

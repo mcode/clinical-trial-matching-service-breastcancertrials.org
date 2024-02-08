@@ -1,5 +1,4 @@
 import { convertToResearchStudy } from '../src/research-study';
-import { updateResearchStudy } from '../src/query';
 import { TrialResponse } from "../src/breastcancertrials";
 
 import * as fs from 'fs';
@@ -8,7 +7,7 @@ import * as util from 'util';
 
 import { Fhir } from 'fhir/fhir';
 import { ValidatorMessage } from 'fhir/validator';
-import { parseStudyJson } from 'clinical-trial-matching-service';
+import { parseStudyJson, createResearchStudyFromClinicalStudy } from 'clinical-trial-matching-service';
 
 function specPath(filePath: string): string {
   return path.join(__dirname, '../../spec', filePath);
@@ -25,7 +24,7 @@ describe('FHIR Validation', () => {
     const clinicalStudy = parseStudyJson(clinicalStudyXML);
     const study = convertToResearchStudy(json);
     if (clinicalStudy) {
-      updateResearchStudy(study, clinicalStudy);
+      createResearchStudyFromClinicalStudy(clinicalStudy, study);
     }
     const result = fhir.validate(study);
     if (result.messages && result.messages.length > 0) {
