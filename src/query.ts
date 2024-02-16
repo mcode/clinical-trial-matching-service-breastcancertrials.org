@@ -4,11 +4,9 @@
  */
 
 import {
-  Study,
   ClinicalTrialsGovService,
   SearchSet,
   ServiceConfiguration,
-  updateResearchStudyWithClinicalStudy
 } from "clinical-trial-matching-service";
 import { Bundle, CodeableConcept, Coding, ResearchStudy } from "fhir/r4";
 import {
@@ -38,25 +36,9 @@ export class APIError extends Error {
 }
 
 /**
- * Slight change to the default way research studies are updated.
- * @param researchStudy the base research study
- * @param clinicalStudy the clinical study data from ClinicalTrials.gov
- */
-export function updateResearchStudy(researchStudy: ResearchStudy, clinicalStudy: Study): void {
-  if (researchStudy.description) {
-    const briefSummary = clinicalStudy.protocolSection?.descriptionModule?.briefSummary;
-    if (briefSummary) {
-      researchStudy.description += '\n\n' + briefSummary;
-    }
-  }
-  updateResearchStudyWithClinicalStudy(researchStudy, clinicalStudy);
-}
-/**
  * Create a new matching function using the given configuration.
  * @param configuration the configuration to use to configure the matcher
- * @param backupService the backup service to use. (Note: at present, the
- *    updateResarchStudy method is "monkey patched" to update how trials are
- *    converted.)
+ * @param backupService the backup service to use
  */
 export function createClinicalTrialLookup(
   configuration: QueryConfiguration,
@@ -67,24 +49,19 @@ export function createClinicalTrialLookup(
     throw new Error("Missing endpoint in configuration");
   }
   const endpoint = configuration.endpoint;
-  // FIXME: While this is sort of the intended usage, it potentially wipes out
-  // customizations from the object passed in
-  backupService.updateResearchStudy = updateResearchStudy;
-  return function getMatchingClinicalTrials(
+  return async function getMatchingClinicalTrials(
     patientBundle: Bundle
   ): Promise<SearchSet> {
     patientBundle = performCodeMapping(patientBundle);
     // For now, the full patient bundle is the query
-    return sendQuery(endpoint, JSON.stringify(patientBundle, null, 2)).then((result) => {
-      return backupService.updateResearchStudies(result.map(convertToResearchStudy)).then((studies) => {
-        const ss = new SearchSet();
-        for (const study of studies) {
-          // If returned from BCT, then the study has a match likelihood of 1
-          ss.addEntry(study, 1);
-        }
-        return ss;
-      });
-    });
+    const result = await sendQuery(endpoint, JSON.stringify(patientBundle, null, 2));
+    const studies = await backupService.updateResearchStudies(result.map(convertToResearchStudy));
+    const ss = new SearchSet();
+    for (const study of studies) {
+      // If returned from BCT, then the study has a match likelihood of 1
+      ss.addEntry(study, 1);
+    }
+    return ss;
   };
 }
 

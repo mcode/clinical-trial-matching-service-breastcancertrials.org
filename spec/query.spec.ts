@@ -1,5 +1,5 @@
 import { ClinicalTrialsGovService, ClinicalTrialMatcher } from "clinical-trial-matching-service";
-import { APIError, createClinicalTrialLookup, performCodeMapping, sendQuery, updateResearchStudy } from "../src/query";
+import { APIError, createClinicalTrialLookup, performCodeMapping, sendQuery } from "../src/query";
 import nock from "nock";
 import { Bundle, BundleEntry, CodeableConcept, ResearchStudy } from "fhir/r4";
 import { importRxnormSnomedMapping, importStageSnomedMapping, importStageAjccMapping } from "../src/breastcancertrials";
@@ -222,24 +222,6 @@ it("handles a missing codeableconcept or coding", () => {
   concept = resource?.["medicationCodeableConcept"] as CodeableConcept;
   expect(concept).toBeDefined();
   expect(concept.coding).toBeUndefined();
-});
-
-describe("updateResearchStudy()", () => {
-  it("does not update the description if none exists", () => {
-    const researchStudy: ResearchStudy = { resourceType: "ResearchStudy", status: "active" };
-    updateResearchStudy(researchStudy, createEmptyClinicalStudy({ briefSummary: "ignore me" }));
-    expect(researchStudy.description).not.toBeDefined();
-  });
-
-  it("does not update the description if there is no brief summary", () => {
-    const researchStudy: ResearchStudy = {
-      resourceType: "ResearchStudy",
-      status: "active",
-      description: "Do not change this"
-    };
-    updateResearchStudy(researchStudy, createEmptyClinicalStudy());
-    expect(researchStudy.description).toEqual("Do not change this");
-  });
 });
 
 describe(".sendQuery", () => {

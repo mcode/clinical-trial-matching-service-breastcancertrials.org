@@ -67,6 +67,7 @@ describe('start()', () => {
     process.env.NODE_ENV = 'test';
     process.env.MATCHING_SERVICE_ENDPOINT = 'https://www.example.com/test/endpoint';
     process.env.MATCHING_SERVICE_PORT = '3005';
+    process.env.CTGOV_CACHE_FILE = ':memory:';
     return expectAsync(
       start().then((service) => {
         expect(service.port).toEqual(3005);
