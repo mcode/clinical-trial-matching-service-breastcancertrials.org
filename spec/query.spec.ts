@@ -1,9 +1,9 @@
 import { ClinicalTrialsGovService, ClinicalTrialMatcher } from "clinical-trial-matching-service";
 import { APIError, createClinicalTrialLookup, performCodeMapping, sendQuery } from "../src/query";
 import nock from "nock";
-import { Bundle, BundleEntry, CodeableConcept, ResearchStudy } from "fhir/r4";
+import { Bundle, BundleEntry, CodeableConcept } from "fhir/r4";
 import { importRxnormSnomedMapping, importStageSnomedMapping, importStageAjccMapping } from "../src/breastcancertrials";
-import { createExampleTrialResponse, createEmptyClinicalStudy, createBundle } from "./support/factory";
+import { createExampleTrialResponse, createBundle } from "./support/factory";
 
 describe(".createClinicalTrialLookup", () => {
   it("raises an error if missing an endpoint", () => {
@@ -44,7 +44,7 @@ describe(".createClinicalTrialLookup", () => {
       // Reply with an empty array
       interceptor.reply(200, []);
       return expectAsync(
-        matcher(createBundle()).then((result) => {
+        matcher(createBundle(), {}).then((result) => {
           expect(result.type).toEqual("searchset");
           // Rather than deal with casting just do this
           expect(result["total"]).toEqual(0);
@@ -56,7 +56,7 @@ describe(".createClinicalTrialLookup", () => {
     it("fills in missing data", () => {
       interceptor.reply(200, [createExampleTrialResponse()]);
       return expectAsync(
-        matcher(createBundle()).then((result) => {
+        matcher(createBundle(), {}).then((result) => {
           const study = result.entry?.[0].resource;
           if (typeof study === 'object' && study?.resourceType === 'ResearchStudy') {
             expect(study.title).toEqual("Title");
