@@ -8,7 +8,7 @@ import {
   SearchSet,
   ServiceConfiguration,
 } from "clinical-trial-matching-service";
-import { Bundle, CodeableConcept, Coding, ResearchStudy } from "fhir/r4";
+import { Bundle, CodeableConcept, Coding } from "fhir/r4";
 import {
   rxnormSnomedMapping,
   stageSnomedMapping,

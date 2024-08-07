@@ -20,18 +20,16 @@ describe('BreastCancerTrialsService', () => {
       return request(server).get('/').set('Accept', 'application/json').expect(200);
     });
 
-    it('uses the query runner', () => {
+    it('uses the query runner', async () => {
       const runQuery = spyOn(service, 'matcher').and.callFake(() => {
         return Promise.resolve(new SearchSet([]));
       });
-      return request(server)
+      await request(server)
         .post('/getClinicalTrial')
         .send({ resourceType: 'Bundle', type: 'collection', entry: [] })
         .set('Accept', 'application/json')
-        .expect(200)
-        .then(() => {
-          expect(runQuery).toHaveBeenCalled();
-        });
+        .expect(200);
+      expect(runQuery).toHaveBeenCalled();
     });
   });
 
